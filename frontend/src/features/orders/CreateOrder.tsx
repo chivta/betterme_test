@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { useCreateOrder, type Order } from "@/api/orders";
+import { useCreateOrder, type Order } from "@/features/orders/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { PlusCircle, MapPin } from "lucide-react";
+import { PlusCircle, MapPin, AlertCircle } from "lucide-react";
 
 export default function CreateOrder() {
   const createMutation = useCreateOrder();
@@ -87,7 +87,10 @@ export default function CreateOrder() {
           </div>
 
           {createMutation.error && (
-            <p className="text-sm text-destructive">{createMutation.error.message}</p>
+            <div className="flex items-start gap-2 rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+              <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
+              <span>{createMutation.error.message}</span>
+            </div>
           )}
 
           <Button type="submit" className="w-full" disabled={createMutation.isPending}>

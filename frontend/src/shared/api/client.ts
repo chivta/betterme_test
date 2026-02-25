@@ -1,8 +1,25 @@
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
-
 let accessToken: string | null = null;
 let refreshToken: string | null = null;
 let onLogout: (() => void) | null = null;
+
+type ErrorEnvelope = {
+  error?: string;
+};
+
+async function parseErrorMessage(resp: Response): Promise<string> {
+  const fallback = `Request failed: ${resp.status}`;
+  const contentType = resp.headers.get("content-type") || "";
+  if (!contentType.includes("application/json")) {
+    return resp.statusText || fallback;
+  }
+
+  const body = (await resp.json().catch(() => null)) as ErrorEnvelope | null;
+  if (body?.error && typeof body.error === "string") {
+    return body.error;
+  }
+
+  return resp.statusText || fallback;
+}
 
 export function setTokens(access: string, refresh: string) {
   accessToken = access;
@@ -29,7 +46,7 @@ async function refreshAccessToken(): Promise<boolean> {
   if (!rt) return false;
 
   try {
-    const resp = await fetch(`${API_URL}/api/auth/refresh`, {
+    const resp = await fetch("/api/auth/refresh", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ refresh_token: rt }),
@@ -67,19 +84,23 @@ export async function apiFetch<T>(
     headers["Content-Type"] = headers["Content-Type"] || "application/json";
   }
 
-  let resp = await fetch(`${API_URL}${path}`, { ...options, headers });
+  let resp = await fetch(path, { ...options, headers });
 
   if (resp.status === 401 && getStoredRefreshToken()) {
     const refreshed = await refreshAccessToken();
     if (refreshed) {
       headers["Authorization"] = `Bearer ${accessToken}`;
-      resp = await fetch(`${API_URL}${path}`, { ...options, headers });
+      resp = await fetch(path, { ...options, headers });
     }
   }
 
   if (!resp.ok) {
-    const body = await resp.json().catch(() => ({ error: resp.statusText }));
-    throw new Error(body.error || `Request failed: ${resp.status}`);
+    const errorMessage = await parseErrorMessage(resp);
+    throw new Error(errorMessage);
+  }
+
+  if (resp.status === 204) {
+    return undefined as T;
   }
 
   return resp.json();

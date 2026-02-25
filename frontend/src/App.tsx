@@ -1,11 +1,11 @@
 import { BrowserRouter, Routes, Route, Navigate, useSearchParams } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "sonner";
-import { AuthProvider, useAuth } from "@/hooks/useAuth";
-import LoginPage from "@/pages/LoginPage";
+import { AuthProvider, useAuth } from "@/features/auth/useAuth";
+import LoginPage from "@/features/auth/LoginPage";
 import DashboardPage from "@/pages/DashboardPage";
 import { useEffect } from "react";
-import { setTokens } from "@/api/client";
+import { setTokens } from "@/shared/api/client";
 
 const queryClient = new QueryClient({
   defaultOptions: {

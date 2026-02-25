@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { useAuth } from "@/hooks/useAuth";
-import { useLogin, getGoogleLoginURL } from "@/api/auth";
+import { useAuth } from "@/features/auth/useAuth";
+import { useLogin, getGoogleLoginURL } from "@/features/auth/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { AlertCircle } from "lucide-react";
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -56,7 +57,10 @@ export default function LoginPage() {
             </div>
 
             {loginMutation.error && (
-              <p className="text-sm text-destructive">{loginMutation.error.message}</p>
+              <div className="flex items-start gap-2 rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+                <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
+                <span>{loginMutation.error.message}</span>
+              </div>
             )}
 
             <Button type="submit" className="w-full" disabled={loginMutation.isPending}>

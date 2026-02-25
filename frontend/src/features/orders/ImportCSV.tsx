@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { useImportCSV, type ImportResult } from "@/api/orders";
+import { useImportCSV, type ImportResult } from "@/features/orders/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Upload, FileText, CheckCircle, AlertCircle } from "lucide-react";

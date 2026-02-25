@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from "react";
-import { setTokens, clearTokens, getStoredRefreshToken, setLogoutCallback } from "@/api/client";
+import { setTokens, clearTokens, getStoredRefreshToken, setLogoutCallback } from "@/shared/api/client";
 
 interface AuthState {
   isAuthenticated: boolean;

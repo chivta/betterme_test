@@ -1,5 +1,5 @@
 import { Fragment, useState } from "react";
-import { useOrders, type OrderFilters } from "@/api/orders";
+import { useOrders, type OrderFilters } from "@/features/orders/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -12,7 +12,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ChevronLeft, ChevronRight, ListFilter, ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronLeft, ChevronRight, ListFilter, ChevronDown, ChevronUp, AlertCircle, RefreshCw } from "lucide-react";
 
 export default function OrdersTable() {
   const [filters, setFilters] = useState<OrderFilters>({
@@ -24,7 +24,7 @@ export default function OrdersTable() {
   const [dateTo, setDateTo] = useState("");
   const [expandedRow, setExpandedRow] = useState<number | null>(null);
 
-  const { data, isLoading, error } = useOrders({
+  const { data, isLoading, error, refetch } = useOrders({
     ...filters,
     county: countyFilter || undefined,
     dateFrom: dateFrom || undefined,
@@ -85,7 +85,14 @@ export default function OrdersTable() {
         </div>
 
         {error && (
-          <p className="text-sm text-destructive">{error.message}</p>
+          <div className="flex items-center gap-3 rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+            <AlertCircle className="h-4 w-4 shrink-0" />
+            <span className="flex-1">{error.message}</span>
+            <Button variant="ghost" size="sm" onClick={() => refetch()} className="text-destructive hover:text-destructive hover:bg-destructive/10">
+              <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
+              Retry
+            </Button>
+          </div>
         )}
 
         <div className="rounded-md border">

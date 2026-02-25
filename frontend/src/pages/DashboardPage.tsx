@@ -1,14 +1,13 @@
-import { useAuth } from "@/hooks/useAuth";
-import { useLogout, getGoogleLoginURL } from "@/api/auth";
-import { getStoredRefreshToken } from "@/api/client";
-import ImportCSV from "@/components/ImportCSV";
-import CreateOrder from "@/components/CreateOrder";
-import OrdersTable from "@/components/OrdersTable";
+import { useAuth } from "@/features/auth/useAuth";
+import { useLogout } from "@/features/auth/api";
+import { getStoredRefreshToken } from "@/shared/api/client";
+import ImportCSV from "@/features/orders/ImportCSV";
+import CreateOrder from "@/features/orders/CreateOrder";
+import OrdersTable from "@/features/orders/OrdersTable";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { LogOut, ExternalLink } from "lucide-react";
-
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
+import { toast } from "sonner";
 
 export default function DashboardPage() {
   const { logout } = useAuth();
@@ -16,8 +15,12 @@ export default function DashboardPage() {
 
   const handleLogout = async () => {
     const rt = getStoredRefreshToken();
-    if (rt) {
-      await logoutMutation.mutateAsync(rt);
+    try {
+      if (rt) {
+        await logoutMutation.mutateAsync(rt);
+      }
+    } catch {
+      toast.error("Sign-out request failed, but you have been logged out locally.");
     }
     logout();
   };
@@ -34,7 +37,7 @@ export default function DashboardPage() {
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="sm" asChild>
               <a
-                href={`${API_URL}/swagger/index.html`}
+                href="/swagger/index.html"
                 target="_blank"
                 rel="noopener noreferrer"
               >
