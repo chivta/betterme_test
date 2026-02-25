@@ -4,7 +4,8 @@ FROM node:20-alpine AS dev
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-RUN npm install --legacy-peer-deps
+RUN npm install --legacy-peer-deps && \
+    npm install --os=linux --cpu=x64 --libc=musl @rollup/rollup-linux-x64-musl --no-save
 
 # Source is mounted at /app via docker-compose for hot reload
 EXPOSE 5173
@@ -19,7 +20,8 @@ ARG VITE_API_URL=http://localhost:8080
 ENV VITE_API_URL=$VITE_API_URL
 
 COPY package.json package-lock.json ./
-RUN npm install --legacy-peer-deps
+RUN npm install --legacy-peer-deps && \
+    npm install --os=linux --cpu=x64 --libc=musl @rollup/rollup-linux-x64-musl --no-save
 
 COPY . .
 RUN npm run build

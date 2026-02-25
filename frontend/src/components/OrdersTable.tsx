@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { useOrders, type OrderFilters } from "@/api/orders";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -117,9 +117,8 @@ export default function OrdersTable() {
                 </TableRow>
               ) : (
                 data.orders.map((order) => (
-                  <>
+                  <Fragment key={order.id}>
                     <TableRow
-                      key={order.id}
                       className="cursor-pointer"
                       onClick={() =>
                         setExpandedRow(expandedRow === order.id ? null : order.id)
@@ -215,7 +214,7 @@ export default function OrdersTable() {
                         </TableCell>
                       </TableRow>
                     )}
-                  </>
+                  </Fragment>
                 ))
               )}
             </TableBody>
