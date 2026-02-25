@@ -113,16 +113,15 @@ func (s *OrderService) ImportCSV(reader io.Reader) (*model.ImportResult, error) 
 	}
 
 	log.Println("Running batch tax calculation...")
-	_, err = s.tax.BatchApplyTax(s.repo.GetDB())
+	_, err = s.tax.BatchApplyTax()
 	if err != nil {
 		return nil, fmt.Errorf("batch tax calculation: %w", err)
 	}
 
-	var totalTax float64
-	s.repo.GetDB().Model(&model.Order{}).
-		Where("composite_tax_rate IS NOT NULL").
-		Select("COALESCE(SUM(tax_amount), 0)").
-		Row().Scan(&totalTax)
+	totalTax, err := s.repo.SumTaxAmount()
+	if err != nil {
+		return nil, fmt.Errorf("sum tax amount: %w", err)
+	}
 
 	truncatedErrors := errors
 	if len(truncatedErrors) > 10 {

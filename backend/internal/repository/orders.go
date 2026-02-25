@@ -83,6 +83,11 @@ func (r *OrderRepository) List(filter OrderFilter) (*model.OrdersResponse, error
 	}, nil
 }
 
-func (r *OrderRepository) GetDB() *gorm.DB {
-	return r.db
+func (r *OrderRepository) SumTaxAmount() (float64, error) {
+	var total float64
+	result := r.db.Model(&model.Order{}).
+		Where("composite_tax_rate IS NOT NULL").
+		Select("COALESCE(SUM(tax_amount), 0)").
+		Scan(&total)
+	return total, result.Error
 }

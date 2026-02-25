@@ -1,3 +1,4 @@
+-- +goose Up
 CREATE EXTENSION IF NOT EXISTS postgis;
 
 CREATE TABLE IF NOT EXISTS jurisdictions (
@@ -7,7 +8,6 @@ CREATE TABLE IF NOT EXISTS jurisdictions (
     state_fips VARCHAR(2) NOT NULL DEFAULT '36',
     geom GEOMETRY(MultiPolygon, 4326) NOT NULL
 );
-
 CREATE INDEX IF NOT EXISTS idx_jurisdictions_geom ON jurisdictions USING GIST(geom);
 
 CREATE TABLE IF NOT EXISTS tax_rates (
@@ -58,6 +58,12 @@ CREATE TABLE IF NOT EXISTS orders (
     total_amount NUMERIC(12,2),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
-
 CREATE INDEX IF NOT EXISTS idx_orders_county ON orders(county_fips);
 CREATE INDEX IF NOT EXISTS idx_orders_timestamp ON orders(order_timestamp);
+
+-- +goose Down
+DROP TABLE IF EXISTS orders;
+DROP TABLE IF EXISTS refresh_tokens;
+DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS tax_rates;
+DROP TABLE IF EXISTS jurisdictions;

@@ -1,7 +1,7 @@
 # ---- dev stage ----
-FROM golang:1.23-alpine AS dev
+FROM golang:1.25.0-alpine AS dev
 
-RUN apk add --no-cache git
+# RUN apk add --no-cache git
 RUN go install github.com/air-verse/air@latest
 
 WORKDIR /app
@@ -14,9 +14,9 @@ EXPOSE 8080
 CMD ["air"]
 
 # ---- build stage ----
-FROM golang:1.23-alpine AS build
+FROM golang:1.25.0-alpine AS build
 
-RUN apk add --no-cache git
+# RUN apk add --no-cache git
 
 WORKDIR /app
 

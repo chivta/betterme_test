@@ -74,8 +74,8 @@ func (s *TaxService) ApplyTaxToOrder(order *model.Order) error {
 
 // BatchApplyTax runs a single SQL UPDATE to calculate tax for all orders missing tax info.
 // Much faster than individual lookups for CSV imports.
-func (s *TaxService) BatchApplyTax(db *gorm.DB) (int64, error) {
-	sqlDB, err := db.DB()
+func (s *TaxService) BatchApplyTax() (int64, error) {
+	sqlDB, err := s.db.DB()
 	if err != nil {
 		return 0, err
 	}

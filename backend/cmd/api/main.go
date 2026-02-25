@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -15,6 +16,7 @@ import (
 	"taxcalc/internal/config"
 	"taxcalc/internal/handler"
 	"taxcalc/internal/middleware"
+	"taxcalc/internal/migrate"
 	"taxcalc/internal/repository"
 	"taxcalc/internal/seed"
 	"taxcalc/internal/service"
@@ -35,6 +37,19 @@ func main() {
 	db, err := gorm.Open(postgres.Open(cfg.DatabaseURL), &gorm.Config{})
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
+	}
+
+	sqlDB, err := db.DB()
+	if err != nil {
+		log.Fatalf("Failed to get underlying sql.DB: %v", err)
+	}
+	sqlDB.SetMaxOpenConns(25)
+	sqlDB.SetMaxIdleConns(5)
+	sqlDB.SetConnMaxLifetime(5 * time.Minute)
+	sqlDB.SetConnMaxIdleTime(1 * time.Minute)
+
+	if err := migrate.Run(sqlDB); err != nil {
+		log.Fatalf("Failed to run migrations: %v", err)
 	}
 
 	if err := seed.Run(db); err != nil {
