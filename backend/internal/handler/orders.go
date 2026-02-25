@@ -6,7 +6,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 
 	"taxcalc/internal/model"
-	"taxcalc/internal/repository"
 	"taxcalc/internal/service"
 )
 
@@ -34,7 +33,7 @@ func (h *OrderHandler) ImportCSV(c *fiber.Ctx) error {
 	file, err := c.FormFile("file")
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "no file uploaded",
+			"error": "no file received — send a CSV file in the 'file' form field (multipart/form-data)",
 		})
 	}
 
@@ -48,9 +47,7 @@ func (h *OrderHandler) ImportCSV(c *fiber.Ctx) error {
 
 	result, err := h.orderService.ImportCSV(f)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
-		})
+		return respondError(c, err)
 	}
 
 	return c.JSON(result)
@@ -72,27 +69,31 @@ func (h *OrderHandler) CreateOrder(c *fiber.Ctx) error {
 	var req model.CreateOrderRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "invalid request body",
+			"error": "request body must be valid JSON",
 		})
 	}
 
 	if req.Subtotal <= 0 {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "subtotal must be greater than 0",
+			"error": "'subtotal' must be greater than 0",
 		})
 	}
 
-	if req.Latitude < -90 || req.Latitude > 90 || req.Longitude < -180 || req.Longitude > 180 {
+	if req.Latitude < -90 || req.Latitude > 90 {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "invalid coordinates",
+			"error": "'latitude' must be between -90 and 90",
+		})
+	}
+
+	if req.Longitude < -180 || req.Longitude > 180 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "'longitude' must be between -180 and 180",
 		})
 	}
 
 	order, err := h.orderService.CreateOrder(req)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
-		})
+		return respondError(c, err)
 	}
 
 	return c.Status(fiber.StatusCreated).JSON(order)
@@ -118,7 +119,7 @@ func (h *OrderHandler) ListOrders(c *fiber.Ctx) error {
 	page, _ := strconv.Atoi(c.Query("page", "1"))
 	pageSize, _ := strconv.Atoi(c.Query("page_size", "20"))
 
-	filter := repository.OrderFilter{
+	filter := model.OrderFilter{
 		Page:     page,
 		PageSize: pageSize,
 		County:   c.Query("county"),
@@ -142,9 +143,7 @@ func (h *OrderHandler) ListOrders(c *fiber.Ctx) error {
 
 	result, err := h.orderService.ListOrders(filter)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
-		})
+		return respondError(c, err)
 	}
 
 	return c.JSON(result)

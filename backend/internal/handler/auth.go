@@ -3,8 +3,8 @@ package handler
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
+	"log"
 	"net/http"
 
 	"github.com/gofiber/fiber/v2"
@@ -63,22 +63,16 @@ type RefreshRequest struct {
 func (h *AuthHandler) Login(c *fiber.Ctx) error {
 	var req LoginRequest
 	if err := c.BodyParser(&req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "invalid request body",
-		})
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "request body must be valid JSON"})
 	}
 
 	if req.Email == "" || req.Password == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "email and password are required",
-		})
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "both 'email' and 'password' fields are required"})
 	}
 
 	tokens, err := h.authService.Login(req.Email, req.Password)
 	if err != nil {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"error": err.Error(),
-		})
+		return respondError(c, err)
 	}
 
 	return c.JSON(tokens)
@@ -92,21 +86,22 @@ func (h *AuthHandler) Login(c *fiber.Ctx) error {
 // @Produce      json
 // @Param        body  body      RefreshRequest  true  "Refresh token"
 // @Success      200   {object}  service.TokenPair
+// @Failure      400   {object}  map[string]string
 // @Failure      401   {object}  map[string]string
 // @Router       /api/auth/refresh [post]
 func (h *AuthHandler) Refresh(c *fiber.Ctx) error {
 	var req RefreshRequest
 	if err := c.BodyParser(&req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "invalid request body",
-		})
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "request body must be valid JSON"})
+	}
+
+	if req.RefreshToken == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "'refresh_token' field is required"})
 	}
 
 	tokens, err := h.authService.RefreshTokens(req.RefreshToken)
 	if err != nil {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"error": err.Error(),
-		})
+		return respondError(c, err)
 	}
 
 	return c.JSON(tokens)
@@ -124,12 +119,14 @@ func (h *AuthHandler) Refresh(c *fiber.Ctx) error {
 func (h *AuthHandler) Logout(c *fiber.Ctx) error {
 	var req RefreshRequest
 	if err := c.BodyParser(&req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "invalid request body",
-		})
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "request body must be valid JSON"})
 	}
 
-	_ = h.authService.Logout(req.RefreshToken)
+	// Logout is best-effort: always return success. Log failures but do not
+	// surface them — the client cannot do anything useful with a logout error.
+	if err := h.authService.Logout(req.RefreshToken); err != nil {
+		log.Printf("logout error: %v", err)
+	}
 
 	return c.JSON(fiber.Map{"message": "logged out"})
 }
@@ -144,9 +141,7 @@ func (h *AuthHandler) Logout(c *fiber.Ctx) error {
 // @Router       /api/auth/google [get]
 func (h *AuthHandler) GoogleLogin(c *fiber.Ctx) error {
 	if h.oauthConfig == nil {
-		return c.Status(fiber.StatusNotImplemented).JSON(fiber.Map{
-			"error": "Google OAuth not configured",
-		})
+		return c.Status(fiber.StatusNotImplemented).JSON(fiber.Map{"error": "Google OAuth not configured"})
 	}
 
 	url := h.oauthConfig.AuthCodeURL("state", oauth2.AccessTypeOffline)
@@ -161,47 +156,39 @@ func (h *AuthHandler) GoogleLogin(c *fiber.Ctx) error {
 // @Param        code   query  string  true  "Authorization code"
 // @Param        state  query  string  false "State parameter"
 // @Success      302  "Redirect to frontend with tokens"
+// @Failure      400  {object}  map[string]string
 // @Failure      500  {object}  map[string]string
 // @Router       /api/auth/google/callback [get]
 func (h *AuthHandler) GoogleCallback(c *fiber.Ctx) error {
 	if h.oauthConfig == nil {
-		return c.Status(fiber.StatusNotImplemented).JSON(fiber.Map{
-			"error": "Google OAuth not configured",
-		})
+		return c.Status(fiber.StatusNotImplemented).JSON(fiber.Map{"error": "Google OAuth not configured"})
 	}
 
 	code := c.Query("code")
 	if code == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "missing authorization code",
-		})
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "'code' query parameter is missing from the OAuth callback"})
 	}
 
 	token, err := h.oauthConfig.Exchange(context.Background(), code)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "failed to exchange code",
-		})
+		return respondError(c, err)
 	}
 
 	userInfo, err := fetchGoogleUserInfo(token.AccessToken)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "failed to fetch user info",
-		})
+		return respondError(c, err)
 	}
 
 	tokens, err := h.authService.FindOrCreateGoogleUser(
 		userInfo.Email, userInfo.Name, userInfo.ID, userInfo.Picture,
 	)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
-		})
+		return respondError(c, err)
 	}
 
-	redirectURL := fmt.Sprintf("%s/auth/callback?access_token=%s&refresh_token=%s&expires_in=%d",
-		h.frontendURL, tokens.AccessToken, tokens.RefreshToken, tokens.ExpiresIn)
+	redirectURL := h.frontendURL + "/auth/callback" +
+		"?access_token=" + tokens.AccessToken +
+		"&refresh_token=" + tokens.RefreshToken
 
 	return c.Redirect(redirectURL, fiber.StatusTemporaryRedirect)
 }
