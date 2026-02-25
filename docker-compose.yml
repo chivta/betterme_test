@@ -43,7 +43,7 @@ services:
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
       GOOGLE_REDIRECT_URL: http://localhost:8080/api/auth/google/callback
-      FRONTEND_URL: http://localhost:3000
+      FRONTEND_URL: http://localhost:5173
       PORT: "8080"
     ports:
       - "8080:8080"
@@ -57,9 +57,9 @@ services:
     depends_on:
       - backend
     environment:
-      VITE_API_URL: http://localhost:8080
+      VITE_API_PROXY_TARGET: http://backend:8080
     ports:
-      - "3000:5173"
+      - "5173:5173"
     command:
       - sh
       - -c
