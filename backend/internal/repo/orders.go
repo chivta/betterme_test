@@ -1,38 +1,29 @@
-package repository
+package repo
 
 import (
-	"taxcalc/internal/model"
-
 	"gorm.io/gorm"
+
+	"taxcalc/internal/model"
 )
 
-type OrderRepository struct {
+// OrderRepo handles all order data access against Postgres.
+type OrderRepo struct {
 	db *gorm.DB
 }
 
-func NewOrderRepository(db *gorm.DB) *OrderRepository {
-	return &OrderRepository{db: db}
+func NewOrderRepo(db *gorm.DB) *OrderRepo {
+	return &OrderRepo{db: db}
 }
 
-func (r *OrderRepository) Create(order *model.Order) error {
+func (r *OrderRepo) Create(order *model.Order) error {
 	return r.db.Create(order).Error
 }
 
-func (r *OrderRepository) CreateInBatches(orders []model.Order, batchSize int) error {
+func (r *OrderRepo) CreateInBatches(orders []model.Order, batchSize int) error {
 	return r.db.CreateInBatches(&orders, batchSize).Error
 }
 
-type OrderFilter struct {
-	Page     int
-	PageSize int
-	County   string
-	DateFrom string
-	DateTo   string
-	MinTotal *float64
-	MaxTotal *float64
-}
-
-func (r *OrderRepository) List(filter OrderFilter) (*model.OrdersResponse, error) {
+func (r *OrderRepo) List(filter model.OrderFilter) (*model.OrdersResponse, error) {
 	if filter.Page < 1 {
 		filter.Page = 1
 	}
@@ -83,7 +74,7 @@ func (r *OrderRepository) List(filter OrderFilter) (*model.OrdersResponse, error
 	}, nil
 }
 
-func (r *OrderRepository) SumTaxAmount() (float64, error) {
+func (r *OrderRepo) SumTaxAmount() (float64, error) {
 	var total float64
 	result := r.db.Model(&model.Order{}).
 		Where("composite_tax_rate IS NOT NULL").

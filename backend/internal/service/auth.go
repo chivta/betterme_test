@@ -4,14 +4,16 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
-	"gorm.io/gorm"
 
+	"taxcalc/internal/apperr"
 	"taxcalc/internal/model"
+	"taxcalc/internal/repo"
 )
 
 const (
@@ -19,16 +21,21 @@ const (
 	RefreshTokenDuration = 7 * 24 * time.Hour
 )
 
-type AuthService struct {
-	db        *gorm.DB
-	jwtSecret []byte
+// UserRepo is defined here (consumer defines interface).
+type UserRepo interface {
+	FindByEmail(email string) (*model.User, error)
+	FindByGoogleID(googleID string) (*model.User, error)
+	FindByID(id uint) (*model.User, error)
+	Create(user *model.User) error
+	Save(user *model.User) error
 }
 
-func NewAuthService(db *gorm.DB, jwtSecret string) *AuthService {
-	return &AuthService{
-		db:        db,
-		jwtSecret: []byte(jwtSecret),
-	}
+// TokenStore is defined here (consumer defines interface).
+// The Redis implementation replaces the refresh_tokens Postgres table entirely.
+type TokenStore interface {
+	Store(hash string, userID uint, ttl time.Duration) error
+	FindByHash(hash string) (uint, error)
+	Delete(hash string) error
 }
 
 type TokenPair struct {
@@ -43,76 +50,100 @@ type JWTClaims struct {
 	jwt.RegisteredClaims
 }
 
+type AuthService struct {
+	users     UserRepo
+	tokens    TokenStore
+	jwtSecret []byte
+}
+
+func NewAuthService(users UserRepo, tokens TokenStore, jwtSecret string) *AuthService {
+	return &AuthService{
+		users:     users,
+		tokens:    tokens,
+		jwtSecret: []byte(jwtSecret),
+	}
+}
+
 func (s *AuthService) Login(email, password string) (*TokenPair, error) {
-	var user model.User
-	if err := s.db.Where("email = ?", email).First(&user).Error; err != nil {
-		return nil, fmt.Errorf("invalid credentials")
+	user, err := s.users.FindByEmail(email)
+	if err != nil {
+		// Deliberately obscure whether the email exists.
+		return nil, apperr.ErrInvalidCredentials
 	}
 
 	if user.PasswordHash == "" {
-		return nil, fmt.Errorf("this account uses Google sign-in only")
+		return nil, apperr.ErrGoogleAuthOnly
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password)); err != nil {
-		return nil, fmt.Errorf("invalid credentials")
+		return nil, apperr.ErrInvalidCredentials
 	}
 
-	return s.generateTokenPair(user)
+	return s.generateTokenPair(*user)
 }
 
 func (s *AuthService) FindOrCreateGoogleUser(email, name, googleID, avatarURL string) (*TokenPair, error) {
-	var user model.User
-	result := s.db.Where("google_id = ?", googleID).First(&user)
+	user, err := s.users.FindByGoogleID(googleID)
 
-	if result.Error == gorm.ErrRecordNotFound {
-		existingResult := s.db.Where("email = ?", email).First(&user)
-		if existingResult.Error == nil {
-			user.GoogleID = &googleID
-			user.AvatarURL = avatarURL
-			if user.Name == "" {
-				user.Name = name
+	if errors.Is(err, repo.ErrNotFound) {
+		existing, err := s.users.FindByEmail(email)
+		if err != nil && !errors.Is(err, repo.ErrNotFound) {
+			return nil, fmt.Errorf("lookup user by email: %w", err)
+		}
+
+		if existing != nil {
+			existing.GoogleID = &googleID
+			existing.AvatarURL = avatarURL
+			if existing.Name == "" {
+				existing.Name = name
 			}
-			s.db.Save(&user)
+			if err := s.users.Save(existing); err != nil {
+				return nil, fmt.Errorf("update user: %w", err)
+			}
+			user = existing
 		} else {
-			user = model.User{
+			newUser := &model.User{
 				Email:     email,
 				Name:      name,
 				GoogleID:  &googleID,
 				AvatarURL: avatarURL,
 			}
-			if err := s.db.Create(&user).Error; err != nil {
+			if err := s.users.Create(newUser); err != nil {
 				return nil, fmt.Errorf("create user: %w", err)
 			}
+			user = newUser
 		}
-	} else if result.Error != nil {
-		return nil, fmt.Errorf("lookup user: %w", result.Error)
+	} else if err != nil {
+		return nil, fmt.Errorf("lookup user: %w", err)
 	}
 
-	return s.generateTokenPair(user)
+	return s.generateTokenPair(*user)
 }
 
 func (s *AuthService) RefreshTokens(refreshToken string) (*TokenPair, error) {
 	hash := hashToken(refreshToken)
 
-	var stored model.RefreshToken
-	err := s.db.Where("token_hash = ? AND expires_at > ?", hash, time.Now()).First(&stored).Error
+	userID, err := s.tokens.FindByHash(hash)
 	if err != nil {
-		return nil, fmt.Errorf("invalid or expired refresh token")
+		// ErrTokenInvalid is already a sentinel — pass it through directly.
+		return nil, err
 	}
 
-	s.db.Delete(&stored)
-
-	var user model.User
-	if err := s.db.First(&user, stored.UserID).Error; err != nil {
-		return nil, fmt.Errorf("user not found")
+	if err := s.tokens.Delete(hash); err != nil {
+		return nil, fmt.Errorf("consume token: %w", err)
 	}
 
-	return s.generateTokenPair(user)
+	user, err := s.users.FindByID(userID)
+	if err != nil {
+		// Token pointed to a user that no longer exists — treat as server error.
+		return nil, fmt.Errorf("user lookup after token validation: %w", err)
+	}
+
+	return s.generateTokenPair(*user)
 }
 
 func (s *AuthService) Logout(refreshToken string) error {
-	hash := hashToken(refreshToken)
-	return s.db.Where("token_hash = ?", hash).Delete(&model.RefreshToken{}).Error
+	return s.tokens.Delete(hashToken(refreshToken))
 }
 
 func (s *AuthService) ValidateAccessToken(tokenStr string) (*JWTClaims, error) {
@@ -158,12 +189,7 @@ func (s *AuthService) generateTokenPair(user model.User) (*TokenPair, error) {
 		return nil, fmt.Errorf("generate refresh token: %w", err)
 	}
 
-	rt := model.RefreshToken{
-		UserID:    user.ID,
-		TokenHash: hashToken(refreshToken),
-		ExpiresAt: now.Add(RefreshTokenDuration),
-	}
-	if err := s.db.Create(&rt).Error; err != nil {
+	if err := s.tokens.Store(hashToken(refreshToken), user.ID, RefreshTokenDuration); err != nil {
 		return nil, fmt.Errorf("store refresh token: %w", err)
 	}
 

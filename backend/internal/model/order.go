@@ -37,8 +37,18 @@ type CreateOrderRequest struct {
 }
 
 type ImportResult struct {
-	TotalImported int     `json:"total_imported"`
-	TotalFailed   int     `json:"total_failed"`
-	TotalTax      float64 `json:"total_tax"`
+	TotalImported int      `json:"total_imported"`
+	TotalFailed   int      `json:"total_failed"`
+	TotalTax      float64  `json:"total_tax"`
 	Errors        []string `json:"errors,omitempty"`
+}
+
+type OrderFilter struct {
+	Page     int
+	PageSize int
+	County   string
+	DateFrom string
+	DateTo   string
+	MinTotal *float64
+	MaxTotal *float64
 }

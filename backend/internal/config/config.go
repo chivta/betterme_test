@@ -4,6 +4,7 @@ import "os"
 
 type Config struct {
 	DatabaseURL        string
+	RedisURL           string
 	JWTSecret          string
 	Port               string
 	GoogleClientID     string
@@ -15,6 +16,7 @@ type Config struct {
 func Load() *Config {
 	return &Config{
 		DatabaseURL:        getEnv("DATABASE_URL", "postgres://app:secret@localhost:5432/taxcalc?sslmode=disable"),
+		RedisURL:           getEnv("REDIS_URL", "redis://localhost:6379"),
 		JWTSecret:          getEnv("JWT_SECRET", "super-secret-jwt-key-change-in-prod"),
 		Port:               getEnv("PORT", "8080"),
 		GoogleClientID:     getEnv("GOOGLE_CLIENT_ID", ""),

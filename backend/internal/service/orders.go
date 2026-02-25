@@ -8,16 +8,24 @@ import (
 	"strconv"
 	"time"
 
+	"taxcalc/internal/apperr"
 	"taxcalc/internal/model"
-	"taxcalc/internal/repository"
 )
 
+// OrderRepo is defined here (consumer defines interface).
+type OrderRepo interface {
+	Create(order *model.Order) error
+	CreateInBatches(orders []model.Order, batchSize int) error
+	List(filter model.OrderFilter) (*model.OrdersResponse, error)
+	SumTaxAmount() (float64, error)
+}
+
 type OrderService struct {
-	repo *repository.OrderRepository
+	repo OrderRepo
 	tax  *TaxService
 }
 
-func NewOrderService(repo *repository.OrderRepository, tax *TaxService) *OrderService {
+func NewOrderService(repo OrderRepo, tax *TaxService) *OrderService {
 	return &OrderService{repo: repo, tax: tax}
 }
 
@@ -28,7 +36,7 @@ func (s *OrderService) CreateOrder(req model.CreateOrderRequest) (*model.Order, 
 		if err != nil {
 			parsed, err = time.Parse("2006-01-02 15:04:05", req.Timestamp)
 			if err != nil {
-				return nil, fmt.Errorf("invalid timestamp format: %w", err)
+				return nil, fmt.Errorf("%w: received %q", apperr.ErrInvalidTimestamp, req.Timestamp)
 			}
 		}
 		ts = parsed
@@ -59,7 +67,7 @@ func (s *OrderService) ImportCSV(reader io.Reader) (*model.ImportResult, error) 
 
 	header, err := csvReader.Read()
 	if err != nil {
-		return nil, fmt.Errorf("read CSV header: %w", err)
+		return nil, fmt.Errorf("%w: could not read the header row — ensure the file is a valid CSV", apperr.ErrInvalidCSV)
 	}
 
 	colMap := make(map[string]int)
@@ -70,7 +78,7 @@ func (s *OrderService) ImportCSV(reader io.Reader) (*model.ImportResult, error) 
 	requiredCols := []string{"latitude", "longitude", "subtotal"}
 	for _, col := range requiredCols {
 		if _, ok := colMap[col]; !ok {
-			return nil, fmt.Errorf("missing required column: %s", col)
+			return nil, fmt.Errorf("%w: missing required column %q — the CSV must have 'latitude', 'longitude', and 'subtotal' columns", apperr.ErrInvalidCSV, col)
 		}
 	}
 
@@ -137,7 +145,7 @@ func (s *OrderService) ImportCSV(reader io.Reader) (*model.ImportResult, error) 
 	}, nil
 }
 
-func (s *OrderService) ListOrders(filter repository.OrderFilter) (*model.OrdersResponse, error) {
+func (s *OrderService) ListOrders(filter model.OrderFilter) (*model.OrdersResponse, error) {
 	return s.repo.List(filter)
 }
 
@@ -151,17 +159,17 @@ func parseCSVRow(record []string, colMap map[string]int, lineNum int) (*model.Or
 
 	lat, err := strconv.ParseFloat(getCol("latitude"), 64)
 	if err != nil {
-		return nil, fmt.Errorf("line %d: invalid latitude: %v", lineNum, err)
+		return nil, fmt.Errorf("line %d: 'latitude' must be a decimal number, got %q", lineNum, getCol("latitude"))
 	}
 
 	lon, err := strconv.ParseFloat(getCol("longitude"), 64)
 	if err != nil {
-		return nil, fmt.Errorf("line %d: invalid longitude: %v", lineNum, err)
+		return nil, fmt.Errorf("line %d: 'longitude' must be a decimal number, got %q", lineNum, getCol("longitude"))
 	}
 
 	subtotal, err := strconv.ParseFloat(getCol("subtotal"), 64)
 	if err != nil {
-		return nil, fmt.Errorf("line %d: invalid subtotal: %v", lineNum, err)
+		return nil, fmt.Errorf("line %d: 'subtotal' must be a decimal number, got %q", lineNum, getCol("subtotal"))
 	}
 
 	ts := time.Now()
@@ -172,7 +180,7 @@ func parseCSVRow(record []string, colMap map[string]int, lineNum int) (*model.Or
 			if err != nil {
 				parsed, err = time.Parse(time.RFC3339, tsStr)
 				if err != nil {
-					return nil, fmt.Errorf("line %d: invalid timestamp: %v", lineNum, err)
+					return nil, fmt.Errorf("line %d: 'timestamp' format not recognised — use 'YYYY-MM-DD HH:MM:SS' or RFC3339, got %q", lineNum, tsStr)
 				}
 			}
 		}
