@@ -4,8 +4,7 @@ FROM node:20-alpine AS dev
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-RUN npm install --legacy-peer-deps && \
-    npm install --os=linux --cpu=x64 --libc=musl @rollup/rollup-linux-x64-musl --no-save
+RUN npm ci
 
 # Source is mounted at /app via docker-compose for hot reload
 EXPOSE 5173
@@ -17,8 +16,7 @@ FROM node:20-alpine AS build
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-RUN npm install --legacy-peer-deps && \
-    npm install --os=linux --cpu=x64 --libc=musl @rollup/rollup-linux-x64-musl --no-save
+RUN npm ci
 
 COPY . .
 RUN npm run build

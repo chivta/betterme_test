@@ -1,33 +1,30 @@
-import { useAuth } from "@/features/auth/useAuth";
-import { useLogout } from "@/features/auth/api";
-import { getStoredRefreshToken } from "@/shared/api/client";
-import ImportCSV from "@/features/orders/ImportCSV";
-import CreateOrder from "@/features/orders/CreateOrder";
-import OrdersTable from "@/features/orders/OrdersTable";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { LogOut, ExternalLink } from "lucide-react";
-import { toast } from "sonner";
+import { apiUrl } from '@/config'
+import { useAuth } from '@/contexts/auth'
+import { useLogout } from '@/contexts/auth/hooks/api'
+import { getStoredRefreshToken } from '@/shared/api/client'
+import { OrdersDashboardPage } from '@/contexts/board/elements/orders'
+import { Button } from '@/components/shadcn/button'
+import { Separator } from '@/components/shadcn/separator'
+import { LogOut, ExternalLink } from 'lucide-react'
+import { toast } from 'sonner'
 
-export default function DashboardPage() {
-  const { logout } = useAuth();
-  const logoutMutation = useLogout();
+function DashboardPage() {
+  const { logout } = useAuth()
+  const { logoutAsync } = useLogout()
 
   const handleLogout = async () => {
-    const rt = getStoredRefreshToken();
+    const rt = getStoredRefreshToken()
     try {
-      if (rt) {
-        await logoutMutation.mutateAsync(rt);
-      }
+      if (rt) await logoutAsync(rt)
     } catch {
-      toast.error("Sign-out request failed, but you have been logged out locally.");
+      toast.error('Sign-out request failed, but you have been logged out locally.')
     }
-    logout();
-  };
+    logout()
+  }
 
   return (
-    <div className="min-h-screen bg-muted/40">
-      <header className="border-b bg-background">
+    <div className="h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800 flex flex-col">
+      <header className="border-b bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm">
         <div className="w-full px-6 flex h-14 items-center justify-between">
           <div className="flex items-center gap-3">
             <h1 className="text-lg font-semibold">Instant Wellness</h1>
@@ -36,11 +33,7 @@ export default function DashboardPage() {
           </div>
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="sm" asChild>
-              <a
-                href="/swagger/index.html"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
+              <a href={`${apiUrl}/swagger/index.html`} target="_blank" rel="noopener noreferrer">
                 <ExternalLink className="mr-1.5 h-3.5 w-3.5" />
                 API Docs
               </a>
@@ -53,13 +46,11 @@ export default function DashboardPage() {
         </div>
       </header>
 
-      <main className="w-full px-6 py-6 space-y-6">
-        <div className="grid gap-6 md:grid-cols-2">
-          <ImportCSV />
-          <CreateOrder />
-        </div>
-        <OrdersTable />
-      </main>
+      <div className="flex-1 overflow-auto">
+        <OrdersDashboardPage />
+      </div>
     </div>
-  );
+  )
 }
+
+export { DashboardPage }

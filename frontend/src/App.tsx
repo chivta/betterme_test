@@ -1,11 +1,10 @@
-import { BrowserRouter, Routes, Route, Navigate, useSearchParams } from "react-router-dom";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Toaster } from "sonner";
-import { AuthProvider, useAuth } from "@/features/auth/useAuth";
-import LoginPage from "@/features/auth/LoginPage";
-import DashboardPage from "@/pages/DashboardPage";
-import { useEffect } from "react";
-import { setTokens } from "@/shared/api/client";
+import { BrowserRouter, Routes, Route, Navigate, useSearchParams } from 'react-router-dom'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { Toaster } from 'sonner'
+import { useEffect } from 'react'
+import { AuthProvider, useAuth } from '@/contexts/auth'
+import { LoginPage } from '@/routes/auth/LoginPage'
+import { DashboardPage } from '@/pages/DashboardPage'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -14,31 +13,31 @@ const queryClient = new QueryClient({
       staleTime: 30_000,
     },
   },
-});
+})
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated } = useAuth();
-  if (!isAuthenticated) return <Navigate to="/login" replace />;
-  return <>{children}</>;
+  const { isAuthenticated } = useAuth()
+  if (!isAuthenticated) return <Navigate to="/login" replace />
+  return <>{children}</>
 }
 
 function AuthCallback() {
-  const { login } = useAuth();
-  const [searchParams] = useSearchParams();
+  const { login } = useAuth()
+  const [searchParams] = useSearchParams()
 
   useEffect(() => {
-    const accessToken = searchParams.get("access_token");
-    const refreshToken = searchParams.get("refresh_token");
+    const accessToken = searchParams.get('access_token')
+    const refreshToken = searchParams.get('refresh_token')
     if (accessToken && refreshToken) {
-      login(accessToken, refreshToken);
+      login(accessToken, refreshToken)
     }
-  }, [searchParams, login]);
+  }, [searchParams, login])
 
-  return <Navigate to="/" replace />;
+  return <Navigate to="/" replace />
 }
 
 function AppRoutes() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth()
 
   return (
     <Routes>
@@ -57,10 +56,10 @@ function AppRoutes() {
       />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
-  );
+  )
 }
 
-export default function App() {
+function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
@@ -70,5 +69,7 @@ export default function App() {
         <Toaster />
       </AuthProvider>
     </QueryClientProvider>
-  );
+  )
 }
+
+export default App
