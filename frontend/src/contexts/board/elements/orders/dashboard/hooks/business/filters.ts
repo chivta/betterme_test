@@ -1,43 +1,46 @@
-import { useState } from 'react'
-import type { OrderFilters } from '../../types'
+import { useState } from "react";
+import type { OrderFilters } from "../../types";
 
 function useOrdersFilters() {
-  const [filters, setFilters] = useState<OrderFilters>({ page: 1, pageSize: 20 })
-  const [countyFilter, setCountyFilter] = useState('')
-  const [dateFrom, setDateFrom] = useState('')
-  const [dateTo, setDateTo] = useState('')
+  const [filters, setFilters] = useState<OrderFilters>({
+    page: 1,
+    pageSize: 20,
+  });
+  const [cityFilter, setCityFilter] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
 
   const applyFilters = () => {
     setFilters((f) => ({
       ...f,
       page: 1,
-      county: countyFilter || undefined,
+      county: cityFilter || undefined,
       dateFrom: dateFrom || undefined,
       dateTo: dateTo || undefined,
-    }))
-  }
+    }));
+  };
 
   const clearFilters = () => {
-    setCountyFilter('')
-    setDateFrom('')
-    setDateTo('')
-    setFilters({ page: 1, pageSize: 20 })
-  }
+    setCityFilter("");
+    setDateFrom("");
+    setDateTo("");
+    setFilters({ page: 1, pageSize: 20 });
+  };
 
-  const setPage = (page: number) => setFilters((f) => ({ ...f, page }))
+  const setPage = (page: number) => setFilters((f) => ({ ...f, page }));
 
   return {
     filters,
-    countyFilter,
+    cityFilter,
     dateFrom,
     dateTo,
-    setCountyFilter,
+    setCityFilter,
     setDateFrom,
     setDateTo,
     applyFilters,
     clearFilters,
     setPage,
-  }
+  };
 }
 
-export { useOrdersFilters }
+export { useOrdersFilters };

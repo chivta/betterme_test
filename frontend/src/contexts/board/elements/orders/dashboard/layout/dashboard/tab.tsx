@@ -1,17 +1,35 @@
-import { useOrdersDashboardContext } from '../../context'
-import { ImportCSVCard } from './components/ImportCSVCard'
-import { CreateOrderCard } from './components/CreateOrderCard'
-import { OrdersTableCard } from './components/OrdersTableCard'
+import { useOrdersDashboardContext } from "../../context";
+import { ImportCSVCard } from "./components/ImportCSVCard";
+import { CreateOrderCard } from "./components/CreateOrderCard";
+import { OrdersTableCard } from "./components/OrdersTableCard";
 
 function DashboardTab() {
   const {
-    orders, total, page, totalPages, isLoading, queryError, refetch,
-    createOrder, createdOrder, isCreating, createError,
-    importCSVAsync, importResult, isImporting, importError,
-    countyFilter, dateFrom, dateTo,
-    setCountyFilter, setDateFrom, setDateTo,
-    applyFilters, clearFilters, setPage,
-  } = useOrdersDashboardContext()
+    orders,
+    total,
+    page,
+    totalPages,
+    isLoading,
+    queryError,
+    refetch,
+    createOrder,
+    createdOrder,
+    isCreating,
+    createError,
+    importCSVAsync,
+    importResult,
+    isImporting,
+    importError,
+    cityFilter,
+    dateFrom,
+    dateTo,
+    setCityFilter,
+    setDateFrom,
+    setDateTo,
+    applyFilters,
+    clearFilters,
+    setPage,
+  } = useOrdersDashboardContext();
 
   return (
     <main className="w-full px-6 py-6 space-y-6">
@@ -36,10 +54,10 @@ function DashboardTab() {
         totalPages={totalPages}
         isLoading={isLoading}
         error={queryError}
-        countyFilter={countyFilter}
+        cityFilter={cityFilter}
         dateFrom={dateFrom}
         dateTo={dateTo}
-        onCountyFilterChange={setCountyFilter}
+        onCityFilterChange={setCityFilter}
         onDateFromChange={setDateFrom}
         onDateToChange={setDateTo}
         onApplyFilters={applyFilters}
@@ -48,7 +66,7 @@ function DashboardTab() {
         onRefetch={refetch}
       />
     </main>
-  )
+  );
 }
 
-export { DashboardTab }
+export { DashboardTab };

@@ -5,12 +5,14 @@ import { getStoredRefreshToken } from '@/shared/api/client'
 import { OrdersDashboardPage } from '@/contexts/board/elements/orders'
 import { Button } from '@/components/shadcn/button'
 import { Separator } from '@/components/shadcn/separator'
-import { LogOut, ExternalLink } from 'lucide-react'
+import { LogOut, ExternalLink, Sun, Moon } from 'lucide-react'
 import { toast } from 'sonner'
+import { useTheme } from '@/hooks/useTheme'
 
 function DashboardPage() {
   const { logout } = useAuth()
   const { logoutAsync } = useLogout()
+  const { theme, toggleTheme } = useTheme()
 
   const handleLogout = async () => {
     const rt = getStoredRefreshToken()
@@ -32,6 +34,9 @@ function DashboardPage() {
             <span className="text-sm text-muted-foreground">Tax Admin</span>
           </div>
           <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" onClick={toggleTheme} aria-label="Toggle theme">
+              {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            </Button>
             <Button variant="ghost" size="sm" asChild>
               <a href={`${apiUrl}/swagger/index.html`} target="_blank" rel="noopener noreferrer">
                 <ExternalLink className="mr-1.5 h-3.5 w-3.5" />
