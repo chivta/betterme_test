@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/shadcn/button";
 import { Input } from "@/components/shadcn/input";
 import { Label } from "@/components/shadcn/label";
@@ -12,6 +12,7 @@ import {
 import { Badge } from "@/components/shadcn/badge";
 import { PlusCircle, MapPin, AlertCircle } from "lucide-react";
 import type { Order } from "../../../types";
+import { CoordinatePicker } from "@/components/custom/CoordinatePicker";
 
 type CreateOrderCardProps = {
   onCreateOrder: (data: {
@@ -33,17 +34,25 @@ function CreateOrderCard({
   const [latitude, setLatitude] = useState("");
   const [longitude, setLongitude] = useState("");
   const [subtotal, setSubtotal] = useState("");
+  const pendingReset = useRef(false);
+
+  useEffect(() => {
+    if (pendingReset.current && createdOrder) {
+      setLatitude("");
+      setLongitude("");
+      setSubtotal("");
+      pendingReset.current = false;
+    }
+  }, [createdOrder]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    pendingReset.current = true;
     onCreateOrder({
       latitude: parseFloat(latitude),
       longitude: parseFloat(longitude),
       subtotal: parseFloat(subtotal),
     });
-    setLatitude("");
-    setLongitude("");
-    setSubtotal("");
   };
 
   return (
@@ -85,6 +94,13 @@ function CreateOrderCard({
               />
             </div>
           </div>
+
+          <CoordinatePicker
+            lat={latitude}
+            lng={longitude}
+            onLatChange={setLatitude}
+            onLngChange={setLongitude}
+          />
 
           <div className="space-y-2">
             <Label htmlFor="subtotal">Subtotal ($)</Label>
