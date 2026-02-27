@@ -23,11 +23,11 @@ type AuthHandler struct {
 
 func NewAuthHandler(authService *service.AuthService, cfg *config.Config) *AuthHandler {
 	var oauthCfg *oauth2.Config
-	if cfg.GoogleClientID != "" && cfg.GoogleClientSecret != "" {
+	if cfg.Auth.GoogleClientID != "" && cfg.Auth.GoogleClientSecret != "" {
 		oauthCfg = &oauth2.Config{
-			ClientID:     cfg.GoogleClientID,
-			ClientSecret: cfg.GoogleClientSecret,
-			RedirectURL:  cfg.GoogleRedirectURL,
+			ClientID:     cfg.Auth.GoogleClientID,
+			ClientSecret: cfg.Auth.GoogleClientSecret,
+			RedirectURL:  cfg.Auth.GoogleRedirectURL,
 			Scopes:       []string{"openid", "email", "profile"},
 			Endpoint:     google.Endpoint,
 		}
@@ -36,7 +36,7 @@ func NewAuthHandler(authService *service.AuthService, cfg *config.Config) *AuthH
 	return &AuthHandler{
 		authService: authService,
 		oauthConfig: oauthCfg,
-		frontendURL: cfg.FrontendURL,
+		frontendURL: cfg.Server.FrontendURL,
 	}
 }
 

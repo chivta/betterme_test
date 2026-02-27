@@ -35,9 +35,13 @@ import (
 // @description Enter your bearer token: Bearer <token>
 func main() {
 	cfg := config.Load()
+	err := config.Validate(cfg)
+	if err != nil {
+		log.Fatalf("Config validation failed: %v", err)
+	}
 
 	// --- Postgres ---
-	db, err := gorm.Open(postgres.Open(cfg.DatabaseURL), &gorm.Config{})
+	db, err := gorm.Open(postgres.Open(cfg.DB.DatabaseURL), &gorm.Config{})
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
@@ -60,7 +64,7 @@ func main() {
 	}
 
 	// --- Redis ---
-	redisOpts, err := redis.ParseURL(cfg.RedisURL)
+	redisOpts, err := redis.ParseURL(cfg.Cache.RedisURL)
 	if err != nil {
 		log.Fatalf("Failed to parse Redis URL: %v", err)
 	}
@@ -78,7 +82,7 @@ func main() {
 	// --- Services ---
 	taxService   := service.NewTaxService(taxRepo)
 	orderService := service.NewOrderService(orderRepo, taxService)
-	authService  := service.NewAuthService(userRepo, tokenRepo, cfg.JWTSecret)
+	authService  := service.NewAuthService(userRepo, tokenRepo, cfg.Auth.JWTSecret)
 
 	// --- Handlers ---
 	orderHandler := handler.NewOrderHandler(orderService)
@@ -113,9 +117,9 @@ func main() {
 	orders.Post("/", orderHandler.CreateOrder)
 	orders.Get("/", orderHandler.ListOrders)
 
-	log.Printf("Server starting on :%s", cfg.Port)
-	log.Printf("Swagger UI available at http://localhost:%s/swagger/index.html", cfg.Port)
-	if err := app.Listen(":" + cfg.Port); err != nil {
+	log.Printf("Server starting on :%s", cfg.Server.Port)
+	log.Printf("Swagger UI available at http://localhost:%s/swagger/index.html", cfg.Server.Port)
+	if err := app.Listen(":" + cfg.Server.Port); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
 	}
 }
