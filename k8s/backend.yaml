@@ -15,7 +15,7 @@ spec:
       containers:
         - name: backend
           # Build: docker build --target prod -t <registry>/backend:latest ./backend
-          image: your-registry/backend:latest
+          image: ghcr.io/chivta/wellness-kit-backend:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 8080
