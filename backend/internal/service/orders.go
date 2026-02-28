@@ -130,6 +130,16 @@ func (s *OrderService) ImportCSV(reader io.Reader) (*model.ImportResult, error) 
 			continue
 		}
 
+		inNY, nyErr := s.tax.IsInNewYork(order.Latitude, order.Longitude)
+		if nyErr != nil {
+			errors = append(errors, fmt.Sprintf("line %d: failed to validate location: %v", lineNum, nyErr))
+			continue
+		}
+		if !inNY {
+			errors = append(errors, fmt.Sprintf("line %d: coordinates (%.6f, %.6f) are outside New York state", lineNum, order.Latitude, order.Longitude))
+			continue
+		}
+
 		orders = append(orders, *order)
 	}
 

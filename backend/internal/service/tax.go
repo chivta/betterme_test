@@ -29,6 +29,7 @@ type TaxService struct {
 	resolver     CountryResolver
 	batchApplier BatchTaxApplier
 	fallback     TaxCalculator
+	nyChecker    func(lat, lon float64) (bool, error)
 }
 
 // NewTaxService creates a TaxService with a coordinate-based country resolver
@@ -50,6 +51,22 @@ func (s *TaxService) Register(country string, calc TaxCalculator) {
 // SetBatchApplier sets the function used by BatchApplyTax.
 func (s *TaxService) SetBatchApplier(fn BatchTaxApplier) {
 	s.batchApplier = fn
+}
+
+// SetNYChecker sets the function used by IsInNewYork.
+// This is called during CSV import to validate coordinates per-row before
+// the bulk insert, so that out-of-state rows are reported as per-row errors.
+func (s *TaxService) SetNYChecker(fn func(lat, lon float64) (bool, error)) {
+	s.nyChecker = fn
+}
+
+// IsInNewYork returns whether (lat, lon) is inside the NY state boundary.
+// Returns true (no-op) when no checker has been configured.
+func (s *TaxService) IsInNewYork(lat, lon float64) (bool, error) {
+	if s.nyChecker == nil {
+		return true, nil
+	}
+	return s.nyChecker(lat, lon)
 }
 
 // ApplyTaxToOrder resolves the country from the order's coordinates,
