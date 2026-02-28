@@ -66,10 +66,22 @@ function useImportCSV() {
   return { importCSVAsync: mutateAsync, importResult: data ?? null, isImporting: isPending, importError: error }
 }
 
+function useDeleteAllOrders() {
+  const queryClient = useQueryClient()
+  const { mutateAsync, isPending, error } = useMutation<void, Error>({
+    mutationFn: () => apiFetch('/api/orders', { method: 'DELETE' }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] })
+    },
+  })
+  return { deleteAllOrdersAsync: mutateAsync, isDeleting: isPending, deleteError: error }
+}
+
 function useOrdersDashboardApi(filters: OrderFilters) {
   const { data, isLoading, error, refetch } = useOrdersQuery(filters)
   const createState = useCreateOrder()
   const importState = useImportCSV()
+  const deleteAllState = useDeleteAllOrders()
 
   return {
     orders: data?.orders ?? [],
@@ -81,7 +93,8 @@ function useOrdersDashboardApi(filters: OrderFilters) {
     refetch,
     ...createState,
     ...importState,
+    ...deleteAllState,
   }
 }
 
-export { useOrdersQuery, useCreateOrder, usePreviewTax, useImportCSV, useOrdersDashboardApi }
+export { useOrdersQuery, useCreateOrder, usePreviewTax, useImportCSV, useDeleteAllOrders, useOrdersDashboardApi }
