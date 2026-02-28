@@ -10,7 +10,7 @@ resources:
 images:
 - name: ghcr.io/chivta/wellness-kit-backend
   newName: ghcr.io/chivta/wellness-kit-backend
-  newTag: sha-4beeee1
+  newTag: sha-ac22fba
 - name: ghcr.io/chivta/wellness-kit-frontend
   newName: ghcr.io/chivta/wellness-kit-frontend
-  newTag: sha-4beeee1
+  newTag: sha-ac22fba
