@@ -622,45 +622,53 @@ function OrdersTableCard({
                 <Upload className="h-4 w-4" />
                 Import CSV
               </Button>
-              <Dialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
-                  <DialogTrigger asChild>
+              <Dialog
+                open={confirmDeleteOpen}
+                onOpenChange={setConfirmDeleteOpen}
+              >
+                <DialogTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                    disabled={isDeleting || total === 0}
+                  >
+                    {isDeleting ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-4 w-4" />
+                    )}
+                    Drop all
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Drop all orders?</DialogTitle>
+                    <DialogDescription>
+                      This will permanently drop all {total.toLocaleString()}{" "}
+                      orders from the database. This action cannot be undone.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <DialogFooter>
                     <Button
-                      size="sm"
-                      variant="ghost"
-                      className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                      disabled={isDeleting || total === 0}
+                      variant="outline"
+                      onClick={() => setConfirmDeleteOpen(false)}
                     >
-                      {isDeleting ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Trash2 className="h-4 w-4" />
-                      )}
-                      Drop all
+                      Cancel
                     </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Drop all orders?</DialogTitle>
-                      <DialogDescription>
-                        This will permanently drop all {total.toLocaleString()} orders from the
-                        database. This action cannot be undone.
-                      </DialogDescription>
-                    </DialogHeader>
-                    <DialogFooter>
-                      <Button variant="outline" onClick={() => setConfirmDeleteOpen(false)}>
-                        Cancel
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        onClick={handleDeleteAll}
-                        disabled={isDeleting}
-                      >
-                        {isDeleting && <Loader2 className="h-4 w-4 animate-spin mr-1" />}
-                        Yes, drop all
-                      </Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
+                    <Button
+                      variant="destructive"
+                      onClick={handleDeleteAll}
+                      disabled={isDeleting}
+                    >
+                      {isDeleting && (
+                        <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                      )}
+                      Yes, drop all
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
             </div>
           </div>
         </CardHeader>
@@ -862,7 +870,7 @@ function OrdersTableCard({
                             {order.longitude.toFixed(4)}
                           </TableCell>
                           <TableCell>
-                            {order.county_name || "—"}
+                            {order.county_name || "NYC duty-free"}
                             {order.special_rate > 0 && (
                               <Badge
                                 variant="outline"
