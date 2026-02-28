@@ -1,0 +1,386 @@
+basePath: /
+definitions:
+  handler.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    type: object
+  handler.RefreshRequest:
+    properties:
+      refresh_token:
+        type: string
+    type: object
+  model.CreateOrderRequest:
+    properties:
+      latitude:
+        type: number
+      longitude:
+        type: number
+      subtotal:
+        type: number
+      timestamp:
+        type: string
+    required:
+    - latitude
+    - longitude
+    - subtotal
+    type: object
+  model.ImportResult:
+    properties:
+      errors:
+        items:
+          type: string
+        type: array
+      total_failed:
+        type: integer
+      total_imported:
+        type: integer
+      total_tax:
+        type: number
+    type: object
+  model.Order:
+    properties:
+      city_rate:
+        type: number
+      composite_tax_rate:
+        type: number
+      county_fips:
+        type: string
+      county_name:
+        type: string
+      county_rate:
+        type: number
+      created_at:
+        type: string
+      external_id:
+        type: integer
+      id:
+        type: integer
+      latitude:
+        type: number
+      longitude:
+        type: number
+      special_rate:
+        type: number
+      state_rate:
+        type: number
+      subtotal:
+        type: number
+      tax_amount:
+        type: number
+      timestamp:
+        type: string
+      total_amount:
+        type: number
+    type: object
+  model.OrdersResponse:
+    properties:
+      orders:
+        items:
+          $ref: '#/definitions/model.Order'
+        type: array
+      page:
+        type: integer
+      page_size:
+        type: integer
+      total:
+        type: integer
+      total_pages:
+        type: integer
+    type: object
+  service.TokenPair:
+    properties:
+      access_token:
+        type: string
+      expires_in:
+        type: integer
+      refresh_token:
+        type: string
+    type: object
+host: int20h.chivtar.dev
+info:
+  contact: {}
+  description: API for calculating NY State composite sales tax on drone-delivered
+    wellness kit orders.
+  title: Instant Wellness Tax Calculator API
+  version: "1.0"
+paths:
+  /api/auth/google:
+    get:
+      description: Redirects the user to Google's OAuth2 consent screen
+      produces:
+      - application/json
+      responses:
+        "302":
+          description: Redirect to Google
+        "501":
+          description: Not Implemented
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Initiate Google OAuth login
+      tags:
+      - auth
+  /api/auth/google/callback:
+    get:
+      description: Handles the OAuth2 callback from Google, creates/finds user, issues
+        tokens
+      parameters:
+      - description: Authorization code
+        in: query
+        name: code
+        required: true
+        type: string
+      - description: State parameter
+        in: query
+        name: state
+        type: string
+      produces:
+      - application/json
+      responses:
+        "302":
+          description: Redirect to frontend with tokens
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Google OAuth callback
+      tags:
+      - auth
+  /api/auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate with email and password to receive access and refresh
+        tokens
+      parameters:
+      - description: Login credentials
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handler.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/service.TokenPair'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Login with credentials
+      tags:
+      - auth
+  /api/auth/logout:
+    post:
+      consumes:
+      - application/json
+      description: Invalidate a refresh token
+      parameters:
+      - description: Refresh token to invalidate
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handler.RefreshRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Logout
+      tags:
+      - auth
+  /api/auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Exchange a valid refresh token for a new access + refresh token
+        pair
+      parameters:
+      - description: Refresh token
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handler.RefreshRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/service.TokenPair'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Refresh tokens
+      tags:
+      - auth
+  /api/orders:
+    get:
+      description: Returns paginated orders with calculated tax data. Supports filtering
+        by county, date range, and total amount.
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Page size
+        in: query
+        name: page_size
+        type: integer
+      - description: Filter by county name
+        in: query
+        name: county
+        type: string
+      - description: Filter from date (YYYY-MM-DD)
+        in: query
+        name: date_from
+        type: string
+      - description: Filter to date (YYYY-MM-DD)
+        in: query
+        name: date_to
+        type: string
+      - description: Min total amount
+        in: query
+        name: min_total
+        type: number
+      - description: Max total amount
+        in: query
+        name: max_total
+        type: number
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.OrdersResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List orders with pagination and filters
+      tags:
+      - orders
+    post:
+      consumes:
+      - application/json
+      description: Create an order manually with lat, lon, subtotal. Tax is calculated
+        immediately.
+      parameters:
+      - description: Order data
+        in: body
+        name: order
+        required: true
+        schema:
+          $ref: '#/definitions/model.CreateOrderRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.Order'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create a single order
+      tags:
+      - orders
+  /api/orders/import:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Upload a CSV file with order data. The system parses, calculates
+        taxes, and saves all orders.
+      parameters:
+      - description: CSV file with orders
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.ImportResult'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Import orders from CSV
+      tags:
+      - orders
+securityDefinitions:
+  BearerAuth:
+    description: 'Enter your bearer token: Bearer <token>'
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
