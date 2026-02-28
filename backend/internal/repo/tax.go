@@ -29,6 +29,34 @@ func NewTaxRepo(db *gorm.DB, cache *redis.Client) *TaxRepo {
 	return &TaxRepo{db: db, cache: cache}
 }
 
+// ResolveCountry determines which country a coordinate belongs to by checking
+// the countries table with PostGIS spatial lookup.
+// Returns the ISO country code (e.g. "US") for the matching country.
+// To add a new country, insert its boundary into the countries table.
+func (r *TaxRepo) ResolveCountry(lat, lon float64) (string, error) {
+	sqlDB, err := r.db.DB()
+	if err != nil {
+		return "", fmt.Errorf("get db: %w", err)
+	}
+
+	const query = `
+		SELECT code FROM countries
+		WHERE ST_Contains(geom, ST_SetSRID(ST_Point($1, $2), 4326))
+		LIMIT 1
+	`
+
+	var code string
+	err = sqlDB.QueryRow(query, lon, lat).Scan(&code)
+	if err == sql.ErrNoRows {
+		return "", fmt.Errorf("%w: received (%.6f, %.6f)", apperr.ErrOutOfBounds, lat, lon)
+	}
+	if err != nil {
+		return "", fmt.Errorf("country resolution: %w", err)
+	}
+
+	return code, nil
+}
+
 func (r *TaxRepo) LookupByCoordinates(lat, lon float64) (*model.TaxBreakdown, error) {
 	ctx := context.Background()
 	key := taxCacheKey(lat, lon)

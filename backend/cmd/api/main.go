@@ -80,7 +80,12 @@ func main() {
 	tokenRepo := repo.NewTokenRepo(rdb)
 
 	// --- Services ---
-	taxService   := service.NewTaxService(taxRepo)
+	usCalc       := service.NewUSTaxCalculator(taxRepo)
+	taxService   := service.NewTaxService(func(coords []float64) (string, error) {
+		return "US", nil
+	}, usCalc) // replace with taxRepo.ResolveCountry
+	taxService.Register("US", usCalc)
+	taxService.SetBatchApplier(taxRepo.BatchApplyTax)
 	orderService := service.NewOrderService(orderRepo, taxService)
 	authService  := service.NewAuthService(userRepo, tokenRepo, cfg.Auth.JWTSecret)
 
