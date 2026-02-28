@@ -1,15 +1,3 @@
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: redis-pvc
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 1Gi
-
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -29,7 +17,6 @@ spec:
           image: redis:7-alpine
           ports:
             - containerPort: 6379
-          args: ["--save", "60", "1"]
           readinessProbe:
             exec:
               command: ["redis-cli", "ping"]
@@ -48,14 +35,6 @@ spec:
             limits:
               cpu: 200m
               memory: 128Mi
-          volumeMounts:
-            - name: redisdata
-              mountPath: /data
-      volumes:
-        - name: redisdata
-          persistentVolumeClaim:
-            claimName: redis-pvc
-
 ---
 apiVersion: v1
 kind: Service

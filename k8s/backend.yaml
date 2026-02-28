@@ -47,11 +47,10 @@ spec:
                   key: GOOGLE_CLIENT_SECRET
             - name: PORT
               value: "8080"
-            # Replace with your actual domain
             - name: GOOGLE_REDIRECT_URL
-              value: "https://your-domain.com/api/auth/google/callback"
+              value: "https://int20h.chivtar.dev/api/auth/google/callback"
             - name: FRONTEND_URL
-              value: "https://your-domain.com"
+              value: "https://int20h.chivtar.dev"
           readinessProbe:
             tcpSocket:
               port: 8080

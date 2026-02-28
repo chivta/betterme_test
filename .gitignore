@@ -2,3 +2,4 @@
 .cursor
 .env
 .vscode
+.env-secrets

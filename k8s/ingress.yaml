@@ -1,23 +1,51 @@
+# Blocks all IPs → 403 (used to protect /api/swagger)
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: deny-all
+spec:
+  ipAllowList:
+    sourceRange:
+      - "255.255.255.255/32"   # matches no real IP → 403 for everyone
+---
+# Higher-priority route that blocks /api/swagger before the main /api rule matches
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: app-swagger-block
+  annotations:
+    traefik.ingress.kubernetes.io/router.priority: "10"
+    traefik.ingress.kubernetes.io/router.middlewares: default-deny-all@kubernetescrd
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: int20h.chivtar.dev
+      http:
+        paths:
+          - path: /api/swagger
+            pathType: Prefix
+            backend:
+              service:
+                name: backend
+                port:
+                  number: 8080
+---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: app-ingress
   annotations:
-    nginx.ingress.kubernetes.io/server-snippet: |
-      location /api/swagger {
-        return 403;
-      }
     # Uncomment if you want TLS via cert-manager:
     # cert-manager.io/cluster-issuer: "letsencrypt-prod"
 spec:
-  ingressClassName: nginx
+  ingressClassName: traefik
   # Uncomment and set your real domain:
   # tls:
   #   - hosts:
   #       - your-domain.com
   #     secretName: app-tls
   rules:
-    - host: your-domain.com
+    - host: int20h.chivtar.dev
       http:
         paths:
           - path: /api
