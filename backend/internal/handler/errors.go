@@ -2,7 +2,7 @@ package handler
 
 import (
 	"errors"
-	"log"
+	"log/slog"
 
 	"github.com/gofiber/fiber/v2"
 
@@ -33,7 +33,7 @@ func respondError(c *fiber.Ctx, err error) error {
 
 	// 5xx — log the real error, sanitize the response
 	default:
-		log.Printf("internal error [%s %s]: %v", c.Method(), c.Path(), err)
+		slog.Error("internal server error", "method", c.Method(), "path", c.Path(), "err", err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "internal server error"})
 	}
 }

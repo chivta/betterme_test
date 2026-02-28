@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 	"math"
 
 	"github.com/redis/go-redis/v9"
@@ -64,7 +64,7 @@ func (r *TaxRepo) LookupByCoordinates(lat, lon float64) (*model.TaxBreakdown, er
 	if cached, err := r.cache.Get(ctx, key).Bytes(); err == nil {
 		var b model.TaxBreakdown
 		if err := json.Unmarshal(cached, &b); err != nil {
-			log.Printf("repo: corrupt tax cache entry for key %s, fetching from db: %v", key, err)
+			slog.Warn("corrupt tax cache entry, fetching from db", "key", key, "err", err)
 		} else {
 			return &b, nil
 		}
@@ -76,7 +76,7 @@ func (r *TaxRepo) LookupByCoordinates(lat, lon float64) (*model.TaxBreakdown, er
 	}
 
 	if data, err := json.Marshal(b); err != nil {
-		log.Printf("repo: failed to marshal tax breakdown for cache: %v", err)
+		slog.Warn("failed to marshal tax breakdown for cache", "err", err)
 	} else {
 		r.cache.Set(ctx, key, data, 0)
 	}
@@ -149,7 +149,7 @@ func (r *TaxRepo) BatchApplyTax() (int64, error) {
 	}
 
 	affected, _ := result.RowsAffected()
-	log.Printf("repo: batch tax applied to %d orders", affected)
+	slog.Info("batch tax applied", "affected_orders", affected)
 	return affected, nil
 }
 

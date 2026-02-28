@@ -3,7 +3,7 @@ package repo
 import (
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 	"strconv"
 	"time"
 
@@ -41,7 +41,7 @@ func (r *TokenRepo) FindByHash(hash string) (uint, error) {
 		return 0, apperr.ErrTokenInvalid
 	}
 	if err != nil {
-		log.Printf("repo: get token: %v", err)
+		slog.Error("repo: get token error", "err", err)
 		return 0, apperr.ErrTokenInvalid
 	}
 

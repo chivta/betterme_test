@@ -4,7 +4,7 @@ import (
 	"encoding/csv"
 	"fmt"
 	"io"
-	"log"
+	"log/slog"
 	"strconv"
 	"time"
 
@@ -113,14 +113,14 @@ func (s *OrderService) ImportCSV(reader io.Reader) (*model.ImportResult, error) 
 		}, nil
 	}
 
-	log.Printf("Parsed %d orders from CSV, inserting...", len(orders))
+	slog.Info("Parsed orders from CSV, inserting", "count", len(orders))
 
 	batchSize := 500
 	if err := s.repo.CreateInBatches(orders, batchSize); err != nil {
 		return nil, fmt.Errorf("bulk insert: %w", err)
 	}
 
-	log.Println("Running batch tax calculation...")
+	slog.Info("Running batch tax calculation")
 	_, err = s.tax.BatchApplyTax()
 	if err != nil {
 		return nil, fmt.Errorf("batch tax calculation: %w", err)

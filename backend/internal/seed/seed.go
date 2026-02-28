@@ -2,7 +2,7 @@ package seed
 
 import (
 	"fmt"
-	"log"
+	"log/slog"
 
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
@@ -40,6 +40,6 @@ func seedAdminUser(db *gorm.DB) error {
 		return err
 	}
 
-	log.Println("Seeded admin user (admin@test.com)")
+	slog.Info("Seeded admin user", "email", "admin@test.com")
 	return nil
 }
