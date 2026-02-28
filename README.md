@@ -1,4 +1,6 @@
 **Deployed Web App:** https://int20h.chivtar.dev
+- login: ```admin@test.com```
+- password: ```admin123```
 
 ## Business
 
