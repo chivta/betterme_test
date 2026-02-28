@@ -38,3 +38,4 @@ var ErrInvalidCSV = errors.New("invalid CSV")
 // any recognised NY state county.
 // Wrap with the coordinates: fmt.Errorf("%w: received (lat, lon)", ErrOutOfBounds)
 var ErrOutOfBounds = errors.New("coordinates are outside any recognized NY jurisdiction")
+

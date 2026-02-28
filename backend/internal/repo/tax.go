@@ -57,6 +57,31 @@ func (r *TaxRepo) ResolveCountry(lat, lon float64) (string, error) {
 	return code, nil
 }
 
+// IsInNewYork reports whether (lat, lon) lies inside the NY state boundary
+// stored in the ny_boundary table (the union of all click_that_hood county
+// polygons, which covers coastal/water zones as well as land).
+// A point inside this boundary but outside all county polygons is the
+// duty-free coastal zone — not an error.
+func (r *TaxRepo) IsInNewYork(lat, lon float64) (bool, error) {
+	sqlDB, err := r.db.DB()
+	if err != nil {
+		return false, fmt.Errorf("get db: %w", err)
+	}
+
+	const query = `
+		SELECT EXISTS(
+			SELECT 1 FROM ny_boundary
+			WHERE ST_Contains(geom, ST_SetSRID(ST_Point($1, $2), 4326))
+		)
+	`
+
+	var inNY bool
+	if err := sqlDB.QueryRow(query, lon, lat).Scan(&inNY); err != nil {
+		return false, fmt.Errorf("ny state lookup: %w", err)
+	}
+	return inNY, nil
+}
+
 func (r *TaxRepo) LookupByCoordinates(lat, lon float64) (*model.TaxBreakdown, error) {
 	ctx := context.Background()
 	key := taxCacheKey(lat, lon)

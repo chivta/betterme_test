@@ -97,6 +97,7 @@ func main() {
 	}, usCalc) // replace with taxRepo.ResolveCountry
 	taxService.Register("US", usCalc)
 	taxService.SetBatchApplier(taxRepo.BatchApplyTax)
+	taxService.SetNYChecker(taxRepo.IsInNewYork)
 	orderService := service.NewOrderService(orderRepo, taxService)
 	authService  := service.NewAuthService(userRepo, tokenRepo, cfg.Auth.JWTSecret)
 
