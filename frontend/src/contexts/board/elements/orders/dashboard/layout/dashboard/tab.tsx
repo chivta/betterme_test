@@ -1,5 +1,4 @@
 import { useOrdersDashboardContext } from "../../context";
-import { CreateOrderCard } from "./components/CreateOrderCard";
 import { OrdersTableCard } from "./components/OrdersTableCard";
 
 function DashboardTab() {
@@ -11,14 +10,7 @@ function DashboardTab() {
     isLoading,
     queryError,
     refetch,
-    createOrder,
-    createdOrder,
-    isCreating,
-    createError,
     importCSVAsync,
-    isImporting: _isImporting,
-    importResult: _importResult,
-    importError: _importError,
     deleteAllOrdersAsync,
     isDeleting,
     filters,
@@ -34,13 +26,7 @@ function DashboardTab() {
   } = useOrdersDashboardContext();
 
   return (
-    <main className="w-full px-6 py-6 space-y-6">
-      <CreateOrderCard
-        onCreateOrder={createOrder}
-        createdOrder={createdOrder}
-        isCreating={isCreating}
-        createError={createError}
-      />
+    <main className="w-full px-6 py-6">
       <OrdersTableCard
         orders={orders}
         total={total}

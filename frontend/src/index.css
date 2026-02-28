@@ -199,3 +199,8 @@
     -moz-appearance: textfield;
   }
 }
+
+/* ── Leaflet SVG path focus ring (appears as a rectangle on click) ── */
+.leaflet-interactive:focus {
+  outline: none;
+}

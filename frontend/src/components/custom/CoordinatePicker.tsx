@@ -3,6 +3,7 @@ import L from "leaflet";
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
+import { type ReactNode } from "react";
 import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
 
 // Fix Leaflet's broken default icon resolution under Vite/Webpack bundlers.
@@ -18,6 +19,9 @@ type CoordinatePickerProps = {
   lng: string;
   onLatChange: (value: string) => void;
   onLngChange: (value: string) => void;
+  className?: string;
+  /** Additional react-leaflet layers rendered inside the MapContainer. */
+  children?: ReactNode;
 };
 
 const NY_CENTER: L.LatLngExpression = [42.8, -75.5];
@@ -41,6 +45,8 @@ function CoordinatePicker({
   lng,
   onLatChange,
   onLngChange,
+  className,
+  children,
 }: CoordinatePickerProps) {
   const parsedLat = parseFloat(lat);
   const parsedLng = parseFloat(lng);
@@ -58,8 +64,11 @@ function CoordinatePicker({
 
   return (
     <div
-      className="rounded-md overflow-hidden border border-border [&_.leaflet-container_img]:border-none [&_.leaflet-container_img]:outline-none"
-      style={{ height: "400px", zIndex: 0, position: "relative" }}
+      className={
+        className ??
+        "rounded-md overflow-hidden border border-border [&_.leaflet-container_img]:border-none [&_.leaflet-container_img]:outline-none"
+      }
+      style={{ height: className ? "100%" : "400px", zIndex: 0, position: "relative" }}
     >
       <MapContainer
         center={NY_CENTER}
@@ -72,6 +81,7 @@ function CoordinatePicker({
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         <ClickHandler onLatChange={onLatChange} onLngChange={onLngChange} />
+        {children}
         {position !== null && (
           <Marker
             position={position}

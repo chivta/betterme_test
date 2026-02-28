@@ -5,6 +5,7 @@ import { useEffect } from 'react'
 import { AuthProvider, useAuth } from '@/contexts/auth'
 import { LoginPage } from '@/routes/auth/LoginPage'
 import { DashboardPage } from '@/pages/DashboardPage'
+import { CreateOrderPage } from '@/pages/CreateOrderPage'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -51,6 +52,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <DashboardPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/orders/create"
+        element={
+          <ProtectedRoute>
+            <CreateOrderPage />
           </ProtectedRoute>
         }
       />

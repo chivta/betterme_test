@@ -89,6 +89,7 @@ func main() {
 	orderRepo := repo.NewOrderRepo(db)
 	userRepo  := repo.NewUserRepo(db)
 	tokenRepo := repo.NewTokenRepo(rdb)
+	geoRepo   := repo.NewGeoRepo(db)
 
 	// --- Services ---
 	usCalc       := service.NewUSTaxCalculator(taxRepo)
@@ -103,7 +104,8 @@ func main() {
 
 	// --- Handlers ---
 	orderHandler := handler.NewOrderHandler(orderService)
-	authHandler := handler.NewAuthHandler(authService, cfg)
+	authHandler  := handler.NewAuthHandler(authService, cfg)
+	geoHandler   := handler.NewGeoHandler(geoRepo)
 
 	// --- HTTP ---
 	app := fiber.New(fiber.Config{
@@ -135,6 +137,10 @@ func main() {
 	orders.Post("/", orderHandler.CreateOrder)
 	orders.Get("/", orderHandler.ListOrders)
 	orders.Delete("/", orderHandler.DeleteAllOrders)
+
+	geo := api.Group("/geo", middleware.JWTAuth(authService))
+	geo.Get("/boundary", geoHandler.NYBoundaryGeoJSON)
+	geo.Get("/jurisdictions", geoHandler.JurisdictionsGeoJSON)
 
 	slog.Info("Server starting", "port", cfg.Server.Port)
 	slog.Info("Swagger UI available", "url", fmt.Sprintf("http://localhost:%s/swagger/index.html", cfg.Server.Port))

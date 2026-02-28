@@ -1,4 +1,5 @@
 import { Fragment, useState, useRef, useEffect, useCallback } from "react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/shadcn/button";
 import { Input } from "@/components/shadcn/input";
 import { Badge } from "@/components/shadcn/badge";
@@ -52,6 +53,7 @@ import {
   Trash2,
   X,
   Eye,
+  PlusCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 import type { Order, ImportResult } from "../../../types";
@@ -606,6 +608,12 @@ function OrdersTableCard({
               </CardDescription>
             </div>
             <div className="flex items-center gap-2 shrink-0">
+              <Button size="sm" asChild>
+                <Link to="/orders/create">
+                  <PlusCircle className="h-4 w-4" />
+                  New Order
+                </Link>
+              </Button>
               <Button
                 size="sm"
                 variant="outline"
