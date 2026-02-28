@@ -145,6 +145,22 @@ func (h *OrderHandler) CreateOrder(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusCreated).JSON(order)
 }
 
+// DeleteAllOrders godoc
+// @Summary      Delete all orders
+// @Description  Permanently deletes every order record from the database.
+// @Tags         orders
+// @Produce      json
+// @Success      200  {object}  map[string]string
+// @Failure      500  {object}  map[string]string
+// @Security     BearerAuth
+// @Router       /api/orders [delete]
+func (h *OrderHandler) DeleteAllOrders(c *fiber.Ctx) error {
+	if err := h.orderService.DeleteAllOrders(); err != nil {
+		return respondError(c, err)
+	}
+	return c.JSON(fiber.Map{"message": "all orders deleted"})
+}
+
 // ListOrders godoc
 // @Summary      List orders with pagination and filters
 // @Description  Returns paginated orders with calculated tax data. Supports filtering by county, date range, and total amount.

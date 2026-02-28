@@ -20,6 +20,8 @@ function DashboardTab() {
     importResult,
     isImporting,
     importError,
+    deleteAllOrdersAsync,
+    isDeleting,
     cityFilter,
     dateFrom,
     dateTo,
@@ -39,6 +41,8 @@ function DashboardTab() {
           importResult={importResult}
           isImporting={isImporting}
           importError={importError}
+          onDeleteAll={deleteAllOrdersAsync}
+          isDeleting={isDeleting}
         />
         <CreateOrderCard
           onCreateOrder={createOrder}

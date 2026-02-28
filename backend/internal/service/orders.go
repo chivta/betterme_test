@@ -18,6 +18,8 @@ type OrderRepo interface {
 	CreateInBatches(orders []model.Order, batchSize int) error
 	List(filter model.OrderFilter) (*model.OrdersResponse, error)
 	SumTaxAmount() (float64, error)
+	SumTaxAmountForIDs(ids []uint) (float64, error)
+	DeleteAll() error
 }
 
 type OrderService struct {
@@ -147,13 +149,18 @@ func (s *OrderService) ImportCSV(reader io.Reader) (*model.ImportResult, error) 
 		return nil, fmt.Errorf("bulk insert: %w", err)
 	}
 
+	insertedIDs := make([]uint, 0, len(orders))
+	for _, o := range orders {
+		insertedIDs = append(insertedIDs, o.ID)
+	}
+
 	slog.Info("Running batch tax calculation")
 	_, err = s.tax.BatchApplyTax()
 	if err != nil {
 		return nil, fmt.Errorf("batch tax calculation: %w", err)
 	}
 
-	totalTax, err := s.repo.SumTaxAmount()
+	totalTax, err := s.repo.SumTaxAmountForIDs(insertedIDs)
 	if err != nil {
 		return nil, fmt.Errorf("sum tax amount: %w", err)
 	}
@@ -174,6 +181,10 @@ func (s *OrderService) ImportCSV(reader io.Reader) (*model.ImportResult, error) 
 
 func (s *OrderService) ListOrders(filter model.OrderFilter) (*model.OrdersResponse, error) {
 	return s.repo.List(filter)
+}
+
+func (s *OrderService) DeleteAllOrders() error {
+	return s.repo.DeleteAll()
 }
 
 func parseCSVRow(record []string, colMap map[string]int, lineNum int) (*model.Order, error) {

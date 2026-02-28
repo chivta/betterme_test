@@ -133,6 +133,7 @@ func main() {
 	orders.Post("/preview", orderHandler.PreviewTax)
 	orders.Post("/", orderHandler.CreateOrder)
 	orders.Get("/", orderHandler.ListOrders)
+	orders.Delete("/", orderHandler.DeleteAllOrders)
 
 	slog.Info("Server starting", "port", cfg.Server.Port)
 	slog.Info("Swagger UI available", "url", fmt.Sprintf("http://localhost:%s/swagger/index.html", cfg.Server.Port))

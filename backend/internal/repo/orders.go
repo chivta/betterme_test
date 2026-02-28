@@ -82,3 +82,19 @@ func (r *OrderRepo) SumTaxAmount() (float64, error) {
 		Scan(&total)
 	return total, result.Error
 }
+
+func (r *OrderRepo) DeleteAll() error {
+	return r.db.Where("1 = 1").Delete(&model.Order{}).Error
+}
+
+func (r *OrderRepo) SumTaxAmountForIDs(ids []uint) (float64, error) {
+	if len(ids) == 0 {
+		return 0, nil
+	}
+	var total float64
+	result := r.db.Model(&model.Order{}).
+		Where("id IN ?", ids).
+		Select("COALESCE(SUM(tax_amount), 0)").
+		Scan(&total)
+	return total, result.Error
+}
