@@ -26,6 +26,8 @@ The result is attached to every order — the composite rate, the tax amount, an
 
 **Auth** — JWT-based authentication with access/refresh token rotation, plus Google OAuth as an alternative login option.
 
+**Designed to scale beyond New York.** The tax engine is built around a registry pattern — `TaxService` holds a map of country-code → `TaxCalculator` functions. When an order comes in, a `CountryResolver` first determines the country from the delivery coordinates (via a PostGIS lookup against the `countries` table), then dispatches to the matching calculator. Adding support for a new country means two things: inserting its boundary polygon into `countries`, and registering a new `TaxCalculator` implementation for its ISO code. The existing NY logic, the order service, and all API endpoints stay completely untouched. The same pattern applies within a country — adding a new state or tax zone is just more polygon data and another calculator strategy, no structural changes required.
+
 ## Frontend
 
 ### Stack
@@ -219,13 +221,14 @@ The backend container runs in `dev` mode with a live-reload volume mount. The fr
 
 ### Production (k8s on VM)
 
-The production setup uses Kubernetes manifests managed by Kustomize, deployed to a cluster running Traefik as the ingress controller.
+The production setup uses Kubernetes manifests managed by Kustomize, with Flux CD watching the repo and automatically applying any changes to the cluster. Traefik handles ingress routing.
 
 **CI/CD pipeline** (`.github/workflows/docker-publish.yml`):
 
 1. On every push to `main`, GitHub Actions builds Docker images for both `backend` and `frontend` using the `prod` Dockerfile target.
 2. Images are pushed to GitHub Container Registry (`ghcr.io`) tagged with `latest` and a short commit SHA (`sha-xxxxxxx`).
 3. A second job updates the image tags in `k8s/kustomization.yaml` and commits the change back to the repo with `[skip ci]`.
+4. Flux CD detects the updated manifest in git and automatically reconciles the cluster — no manual `kubectl apply` needed.
 
 **Kubernetes manifests** (`k8s/`):
 
@@ -236,4 +239,4 @@ The production setup uses Kubernetes manifests managed by Kustomize, deployed to
 | `postgres.yaml`      | Deployment + Service + 5 Gi PersistentVolumeClaim                                      |
 | `redis.yaml`         | Deployment + Service                                                                   |
 | `ingress.yaml`       | Traefik Ingress — routes `/api` and `/swagger` to backend, everything else to frontend |
-| `kustomization.yaml` | Pins image tags; apply with `kubectl apply -k k8s/`                                    |
+| `kustomization.yaml` | Pins image tags; Flux reconciles automatically on every change                         |
