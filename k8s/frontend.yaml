@@ -14,7 +14,6 @@ spec:
     spec:
       containers:
         - name: frontend
-          # Build: docker build --target prod -t <registry>/frontend:latest ./frontend
           image: ghcr.io/chivta/wellness-kit-frontend:latest
           imagePullPolicy: Always
           ports:
