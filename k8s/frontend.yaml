@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: frontend
+  namespace: default
 spec:
   replicas: 1
   selector:
@@ -14,7 +15,6 @@ spec:
     spec:
       containers:
         - name: frontend
-          # Build: docker build --target prod -t <registry>/frontend:latest ./frontend
           image: ghcr.io/chivta/wellness-kit-frontend:latest
           imagePullPolicy: Always
           ports:
@@ -44,6 +44,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: frontend
+  namespace: default
 spec:
   selector:
     app: frontend

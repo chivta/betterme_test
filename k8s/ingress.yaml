@@ -2,25 +2,29 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: app-ingress
+  namespace: default
   annotations:
-    nginx.ingress.kubernetes.io/server-snippet: |
-      location /api/swagger {
-        return 403;
-      }
     # Uncomment if you want TLS via cert-manager:
     # cert-manager.io/cluster-issuer: "letsencrypt-prod"
 spec:
-  ingressClassName: nginx
+  ingressClassName: traefik
   # Uncomment and set your real domain:
   # tls:
   #   - hosts:
   #       - your-domain.com
   #     secretName: app-tls
   rules:
-    - host: your-domain.com
+    - host: int20h.chivtar.dev
       http:
         paths:
           - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: backend
+                port:
+                  number: 8080
+          - path: /swagger
             pathType: Prefix
             backend:
               service:

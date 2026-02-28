@@ -27,7 +27,7 @@ import (
 // @title           Instant Wellness Tax Calculator API
 // @version         1.0
 // @description     API for calculating NY State composite sales tax on drone-delivered wellness kit orders.
-// @host            localhost:8080
+// @host            int20h.chivtar.dev
 // @BasePath        /
 // @securityDefinitions.apikey BearerAuth
 // @in header
