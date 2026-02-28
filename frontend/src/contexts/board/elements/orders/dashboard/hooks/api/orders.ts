@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiFetch } from '@/shared/api/client'
-import type { Order, OrdersResponse, ImportResult, OrderFilters } from '../../types'
+import type { Order, OrdersResponse, ImportResult, OrderFilters, TaxPreview } from '../../types'
 
 const THIRTY_SECONDS = 30 * 1000
 const TWO_MINUTES = 2 * 60 * 1000
@@ -39,6 +39,18 @@ function useCreateOrder() {
   return { createOrder: mutate, createdOrder: data ?? null, isCreating: isPending, createError: error }
 }
 
+function usePreviewTax() {
+  const { mutateAsync, data, isPending, error, reset } = useMutation<
+    TaxPreview,
+    Error,
+    { latitude: number; longitude: number; subtotal: number }
+  >({
+    mutationFn: (payload) =>
+      apiFetch('/api/orders/preview', { method: 'POST', body: JSON.stringify(payload) }),
+  })
+  return { previewTaxAsync: mutateAsync, taxPreview: data ?? null, isPreviewing: isPending, previewError: error, resetPreview: reset }
+}
+
 function useImportCSV() {
   const queryClient = useQueryClient()
   const { mutateAsync, data, isPending, error } = useMutation<ImportResult, Error, File>({
@@ -72,4 +84,4 @@ function useOrdersDashboardApi(filters: OrderFilters) {
   }
 }
 
-export { useOrdersQuery, useCreateOrder, useImportCSV, useOrdersDashboardApi }
+export { useOrdersQuery, useCreateOrder, usePreviewTax, useImportCSV, useOrdersDashboardApi }

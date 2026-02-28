@@ -42,4 +42,19 @@ type OrderFilters = {
   maxTotal?: number
 }
 
-export type { Order, OrdersResponse, ImportResult, OrderFilters }
+type TaxPreview = {
+  latitude: number
+  longitude: number
+  subtotal: number
+  county_fips?: string
+  county_name?: string
+  state_rate: number
+  county_rate: number
+  city_rate: number
+  special_rate: number
+  composite_tax_rate: number
+  tax_amount: number
+  total_amount: number
+}
+
+export type { Order, OrdersResponse, ImportResult, OrderFilters, TaxPreview }

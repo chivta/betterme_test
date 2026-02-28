@@ -53,6 +53,52 @@ func (h *OrderHandler) ImportCSV(c *fiber.Ctx) error {
 	return c.JSON(result)
 }
 
+// PreviewTax godoc
+// @Summary      Preview tax for an order without saving
+// @Description  Calculates the tax for given coordinates and subtotal without creating an order.
+// @Tags         orders
+// @Accept       json
+// @Produce      json
+// @Param        order  body      model.CreateOrderRequest  true  "Order data"
+// @Success      200    {object}  model.TaxPreview
+// @Failure      400    {object}  map[string]string
+// @Failure      500    {object}  map[string]string
+// @Security     BearerAuth
+// @Router       /api/orders/preview [post]
+func (h *OrderHandler) PreviewTax(c *fiber.Ctx) error {
+	var req model.CreateOrderRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "request body must be valid JSON",
+		})
+	}
+
+	if req.Subtotal <= 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "'subtotal' must be greater than 0",
+		})
+	}
+
+	if req.Latitude < -90 || req.Latitude > 90 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "'latitude' must be between -90 and 90",
+		})
+	}
+
+	if req.Longitude < -180 || req.Longitude > 180 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "'longitude' must be between -180 and 180",
+		})
+	}
+
+	preview, err := h.orderService.PreviewTax(req)
+	if err != nil {
+		return respondError(c, err)
+	}
+
+	return c.JSON(preview)
+}
+
 // CreateOrder godoc
 // @Summary      Create a single order
 // @Description  Create an order manually with lat, lon, subtotal. Tax is calculated immediately.

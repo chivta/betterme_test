@@ -43,6 +43,21 @@ type ImportResult struct {
 	Errors        []string `json:"errors,omitempty"`
 }
 
+type TaxPreview struct {
+	Latitude         float64 `json:"latitude"`
+	Longitude        float64 `json:"longitude"`
+	Subtotal         float64 `json:"subtotal"`
+	CountyFIPS       string  `json:"county_fips,omitempty"`
+	CountyName       string  `json:"county_name,omitempty"`
+	StateRate        float64 `json:"state_rate"`
+	CountyRate       float64 `json:"county_rate"`
+	CityRate         float64 `json:"city_rate"`
+	SpecialRate      float64 `json:"special_rate"`
+	CompositeTaxRate float64 `json:"composite_tax_rate"`
+	TaxAmount        float64 `json:"tax_amount"`
+	TotalAmount      float64 `json:"total_amount"`
+}
+
 type OrderFilter struct {
 	Page     int
 	PageSize int

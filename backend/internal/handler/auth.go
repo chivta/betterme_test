@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"io"
-	"log"
+	"log/slog"
 	"net/http"
 
 	"github.com/gofiber/fiber/v2"
@@ -125,7 +125,7 @@ func (h *AuthHandler) Logout(c *fiber.Ctx) error {
 	// Logout is best-effort: always return success. Log failures but do not
 	// surface them — the client cannot do anything useful with a logout error.
 	if err := h.authService.Logout(req.RefreshToken); err != nil {
-		log.Printf("logout error: %v", err)
+		slog.Error("logout error", "err", err)
 	}
 
 	return c.JSON(fiber.Map{"message": "logged out"})
