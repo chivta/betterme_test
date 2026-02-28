@@ -60,6 +60,33 @@ func (s *OrderService) CreateOrder(req model.CreateOrderRequest) (*model.Order, 
 	return &order, nil
 }
 
+func (s *OrderService) PreviewTax(req model.CreateOrderRequest) (*model.TaxPreview, error) {
+	order := model.Order{
+		Latitude:  req.Latitude,
+		Longitude: req.Longitude,
+		Subtotal:  req.Subtotal,
+	}
+
+	if err := s.tax.ApplyTaxToOrder(&order); err != nil {
+		return nil, fmt.Errorf("calculate tax: %w", err)
+	}
+
+	return &model.TaxPreview{
+		Latitude:         order.Latitude,
+		Longitude:        order.Longitude,
+		Subtotal:         order.Subtotal,
+		CountyFIPS:       order.CountyFIPS,
+		CountyName:       order.CountyName,
+		StateRate:        order.StateRate,
+		CountyRate:       order.CountyRate,
+		CityRate:         order.CityRate,
+		SpecialRate:      order.SpecialRate,
+		CompositeTaxRate: order.CompositeTaxRate,
+		TaxAmount:        order.TaxAmount,
+		TotalAmount:      order.TotalAmount,
+	}, nil
+}
+
 func (s *OrderService) ImportCSV(reader io.Reader) (*model.ImportResult, error) {
 	csvReader := csv.NewReader(reader)
 	csvReader.LazyQuotes = true

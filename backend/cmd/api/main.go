@@ -130,6 +130,7 @@ func main() {
 
 	orders := api.Group("/orders", middleware.JWTAuth(authService))
 	orders.Post("/import", orderHandler.ImportCSV)
+	orders.Post("/preview", orderHandler.PreviewTax)
 	orders.Post("/", orderHandler.CreateOrder)
 	orders.Get("/", orderHandler.ListOrders)
 
