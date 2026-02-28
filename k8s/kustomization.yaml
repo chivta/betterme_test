@@ -6,3 +6,10 @@ resources:
 - ingress.yaml
 - postgres.yaml
 - redis.yaml
+images:
+- name: ghcr.io/chivta/wellness-kit-backend
+  newName: ghcr.io/chivta/wellness-kit-backend
+  newTag: sha-47c5766
+- name: ghcr.io/chivta/wellness-kit-frontend
+  newName: ghcr.io/chivta/wellness-kit-frontend
+  newTag: sha-47c5766
