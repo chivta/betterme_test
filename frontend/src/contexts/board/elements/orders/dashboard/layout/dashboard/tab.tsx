@@ -1,5 +1,4 @@
 import { useOrdersDashboardContext } from "../../context";
-import { ImportCSVCard } from "./components/ImportCSVCard";
 import { CreateOrderCard } from "./components/CreateOrderCard";
 import { OrdersTableCard } from "./components/OrdersTableCard";
 
@@ -17,11 +16,12 @@ function DashboardTab() {
     isCreating,
     createError,
     importCSVAsync,
-    importResult,
-    isImporting,
-    importError,
+    isImporting: _isImporting,
+    importResult: _importResult,
+    importError: _importError,
     deleteAllOrdersAsync,
     isDeleting,
+    filters,
     cityFilter,
     dateFrom,
     dateTo,
@@ -35,22 +35,12 @@ function DashboardTab() {
 
   return (
     <main className="w-full px-6 py-6 space-y-6">
-      <div className="grid gap-6 md:grid-cols-2">
-        <ImportCSVCard
-          onImport={importCSVAsync}
-          importResult={importResult}
-          isImporting={isImporting}
-          importError={importError}
-          onDeleteAll={deleteAllOrdersAsync}
-          isDeleting={isDeleting}
-        />
-        <CreateOrderCard
-          onCreateOrder={createOrder}
-          createdOrder={createdOrder}
-          isCreating={isCreating}
-          createError={createError}
-        />
-      </div>
+      <CreateOrderCard
+        onCreateOrder={createOrder}
+        createdOrder={createdOrder}
+        isCreating={isCreating}
+        createError={createError}
+      />
       <OrdersTableCard
         orders={orders}
         total={total}
@@ -61,6 +51,7 @@ function DashboardTab() {
         cityFilter={cityFilter}
         dateFrom={dateFrom}
         dateTo={dateTo}
+        appliedFilters={filters}
         onCityFilterChange={setCityFilter}
         onDateFromChange={setDateFrom}
         onDateToChange={setDateTo}
@@ -68,6 +59,9 @@ function DashboardTab() {
         onClearFilters={clearFilters}
         onPageChange={setPage}
         onRefetch={refetch}
+        onImport={importCSVAsync}
+        onDeleteAll={deleteAllOrdersAsync}
+        isDeleting={isDeleting}
       />
     </main>
   );

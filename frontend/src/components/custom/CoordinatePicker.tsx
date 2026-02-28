@@ -36,7 +36,12 @@ function ClickHandler({
   return null;
 }
 
-function CoordinatePicker({ lat, lng, onLatChange, onLngChange }: CoordinatePickerProps) {
+function CoordinatePicker({
+  lat,
+  lng,
+  onLatChange,
+  onLngChange,
+}: CoordinatePickerProps) {
   const parsedLat = parseFloat(lat);
   const parsedLng = parseFloat(lng);
   const hasValidPosition =
@@ -54,7 +59,7 @@ function CoordinatePicker({ lat, lng, onLatChange, onLngChange }: CoordinatePick
   return (
     <div
       className="rounded-md overflow-hidden border border-border [&_.leaflet-container_img]:border-none [&_.leaflet-container_img]:outline-none"
-      style={{ height: "400px" }}
+      style={{ height: "400px", zIndex: 0, position: "relative" }}
     >
       <MapContainer
         center={NY_CENTER}
