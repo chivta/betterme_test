@@ -10,7 +10,6 @@ spec:
   tls:
     - hosts:
         - int20h.chivtar.dev
-      secretName: app-tls
   rules:
     - host: int20h.chivtar.dev
       http:
