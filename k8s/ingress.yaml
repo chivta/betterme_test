@@ -4,15 +4,13 @@ metadata:
   name: app-ingress
   namespace: default
   annotations:
-    # Uncomment if you want TLS via cert-manager:
-    # cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    traefik.ingress.kubernetes.io/router.tls.certresolver: letsencrypt
 spec:
   ingressClassName: traefik
-  # Uncomment and set your real domain:
-  # tls:
-  #   - hosts:
-  #       - your-domain.com
-  #     secretName: app-tls
+  tls:
+    - hosts:
+        - int20h.chivtar.dev
+      secretName: app-tls
   rules:
     - host: int20h.chivtar.dev
       http:
